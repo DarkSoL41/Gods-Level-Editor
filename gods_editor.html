@@ -1,0 +1,2210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="author" content="DarkSoL (Discord: darksol41)">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gods Level Editor</title>
+<style>
+:root{
+  --stone-0:#15181d; --stone-1:#1d2128; --stone-2:#262b34; --stone-3:#323946; --mortar:#444d5c;
+  --ink:#e8e2d4; --dim:#9aa3b0; --faint:#6c7584;
+  --bronze:#d9933f; --bronze-hi:#f3bf6c; --verdigris:#55b39a; --blood:#d8553f; --sky:#6aa7e8; --violet:#b58ae6;
+  --ui:"Segoe UI","Trebuchet MS",system-ui,sans-serif; --num:Consolas,"Cascadia Mono","Courier New",monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+[hidden]{display:none!important}
+body{background:var(--stone-0);color:var(--ink);font:13px/1.45 var(--ui);display:flex;flex-direction:column;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4,p{margin:0}
+a{color:var(--bronze-hi)}
+:focus-visible{outline:2px solid var(--bronze-hi);outline-offset:1px}
+
+/* top bar */
+#top{flex:none;height:46px;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--stone-2);
+  border-bottom:2px solid #0d0f12;box-shadow:inset 0 -1px 0 var(--mortar)}
+#brand{font:700 17px/1 Georgia,"Times New Roman",serif;letter-spacing:.32em;color:var(--bronze-hi);
+  text-shadow:0 1px 0 #6b3f12,0 2px 0 #1a0f04;margin-right:6px;padding-left:2px}
+#brand small{font:400 11px var(--ui);letter-spacing:.02em;color:var(--dim);text-shadow:none;margin-left:10px}
+.grow{flex:1}
+.btn{background:var(--stone-3);border:1px solid var(--mortar);border-bottom-color:#12151a;border-radius:3px;padding:5px 11px;cursor:pointer;white-space:nowrap}
+.btn:hover:not(:disabled){background:#3b4452;border-color:var(--bronze)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.main{background:var(--bronze);border-color:#f0b660 #a86a22 #7a4a14;color:#1c1206;font-weight:600}
+.btn.main:hover:not(:disabled){background:var(--bronze-hi)}
+.btn.small{padding:2px 8px;font-size:12px}
+.btn.on{background:var(--verdigris);border-color:#8fd9c4;color:#07201a;font-weight:600}
+select,input[type=text],input[type=number],input[type=search],textarea{background:var(--stone-0);border:1px solid var(--mortar);border-radius:3px;padding:4px 6px;min-width:0}
+select:hover,input:hover{border-color:var(--faint)}
+input[type=number]{font-family:var(--num);width:74px}
+#levelSel{font-weight:600}
+.sep{width:1px;height:22px;background:var(--mortar);margin:0 2px}
+#dirty{color:var(--bronze-hi);font-size:12px;min-width:92px}
+.menu{position:relative}
+.menu .pop{position:absolute;right:0;top:34px;background:var(--stone-2);border:1px solid var(--mortar);border-radius:4px;padding:6px;z-index:30;
+  display:flex;flex-direction:column;gap:2px;min-width:220px;box-shadow:0 8px 24px #000a}
+.menu .pop button{background:none;border:0;text-align:left;padding:6px 8px;border-radius:3px;cursor:pointer}
+.menu .pop button:hover{background:var(--stone-3)}
+.menu .pop label{display:flex;gap:8px;align-items:center;padding:4px 8px;cursor:pointer;border-radius:3px}
+.menu .pop label:hover{background:var(--stone-3)}
+
+/* layout */
+#work{flex:1;display:grid;grid-template-columns:364px minmax(0,1fr) 448px;min-height:0}
+#tools{background:var(--stone-1);border-right:1px solid #0d0f12;display:flex;flex-direction:column;min-height:0}
+#modes{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid #0d0f12}
+#modes button{background:var(--stone-2);border:0;border-right:1px solid #0d0f12;padding:8px 0 6px;cursor:pointer;color:var(--dim);font-size:11px;line-height:1.2}
+#modes button:last-child{border-right:0}
+#modes button b{display:block;font:700 15px var(--num);color:var(--faint)}
+#modes button:hover{color:var(--ink)}
+#modes button.on{background:var(--stone-1);color:var(--bronze-hi);box-shadow:inset 0 2px 0 var(--bronze)}
+#modes button.on b{color:var(--bronze)}
+.pane{flex:1;overflow-y:auto;padding:10px;min-height:0}
+.pane::-webkit-scrollbar,.scroll::-webkit-scrollbar{width:10px}
+.pane::-webkit-scrollbar-thumb,.scroll::-webkit-scrollbar-thumb{background:var(--stone-3);border:2px solid var(--stone-1);border-radius:6px}
+.hintline{color:var(--dim);font-size:12px;margin:0 0 8px}
+.hintline kbd,.guide kbd{font:11px var(--num);background:var(--stone-3);border:1px solid var(--mortar);border-radius:3px;padding:0 4px;color:var(--ink)}
+
+/* tile palette */
+#tilePal{display:grid;gap:1px;user-select:none;width:max-content}
+.palWrap{overflow-x:auto;padding-bottom:4px}
+#tilePal canvas{display:block;image-rendering:pixelated;cursor:pointer;outline:1px solid #0008}
+#tilePal canvas.on{outline:2px solid var(--bronze-hi);z-index:1;position:relative}
+.rowbtns{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+.rowbtns .btn{flex:1}
+.swatch{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+/* object palette */
+.chips{display:flex;flex-direction:column;gap:1px}
+.chip{display:flex;align-items:center;gap:8px;background:none;border:1px solid transparent;border-radius:3px;padding:2px 6px;cursor:pointer;text-align:left;min-height:26px;width:100%}
+.chip:hover{background:var(--stone-2)}
+.chip.on{background:var(--stone-3);border-color:var(--bronze)}
+.chip canvas{image-rendering:pixelated;flex:none;width:24px;height:24px;object-fit:contain}
+.chip .n{font:11px var(--num);color:var(--faint);width:26px;flex:none}
+.chip .c{font-size:11px;color:var(--faint);margin-left:auto;white-space:nowrap}
+.catHead{font-size:11px;color:var(--bronze);margin:10px 0 3px;border-bottom:1px solid var(--stone-3);padding-bottom:2px}
+
+/* stage */
+#stage{position:relative;background:#0b0d10;min-width:0;min-height:0;overflow:hidden}
+#cv{position:absolute;inset:0 0 24px 0;width:100%;height:calc(100% - 24px);display:block;cursor:crosshair;outline:none}
+#status{position:absolute;left:0;right:0;bottom:0;height:24px;background:var(--stone-1);border-top:1px solid #0d0f12;display:flex;align-items:center;
+  gap:16px;padding:0 10px;font:12px var(--num);color:var(--dim);white-space:nowrap;overflow:hidden}
+#status b{color:var(--ink);font-weight:400}
+#zoomBox{position:absolute;right:10px;top:10px;display:flex;align-items:center;background:var(--stone-2);border:1px solid var(--mortar);border-radius:4px;overflow:hidden}
+#zoomBox button{background:none;border:0;width:28px;height:26px;cursor:pointer;font-size:15px}
+#zoomBox button:hover{background:var(--stone-3)}
+#zoomBox span{font:12px var(--num);width:46px;text-align:center;color:var(--dim)}
+
+/* side */
+#side{background:var(--stone-1);border-left:1px solid #0d0f12;display:flex;flex-direction:column;min-height:0}
+#tabs{display:flex;flex-wrap:wrap;background:var(--stone-2);border-bottom:1px solid #0d0f12}
+#tabs button{background:none;border:0;padding:8px 5px 7px;font-size:12px;cursor:pointer;color:var(--dim);border-bottom:2px solid transparent}
+#tabs button:hover{color:var(--ink)}
+#tabs button.on{color:var(--bronze-hi);border-bottom-color:var(--bronze)}
+#tabs button .cnt{font:10px var(--num);background:var(--blood);color:#fff;border-radius:8px;padding:0 5px;margin-left:4px}
+.scroll{flex:1;overflow-y:auto;padding:12px;min-height:0}
+.title{font:600 15px var(--ui);color:var(--bronze-hi);margin-bottom:2px}
+.sub{color:var(--dim);font-size:12px;margin-bottom:10px}
+.h{font-weight:600;color:var(--verdigris);margin:16px 0 6px;font-size:12px;border-bottom:1px solid var(--stone-3);padding-bottom:3px}
+.field{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 8px;align-items:center;margin-bottom:5px}
+.field>label{color:var(--dim);font-size:12px}
+.field .ctl{display:flex;gap:6px;align-items:center;min-width:0;flex-wrap:wrap}
+.field .ctl select{flex:1;max-width:100%}
+.field .help{grid-column:2;color:var(--faint);font-size:11px;margin-top:-2px}
+.field.check{grid-template-columns:1fr}
+.field.check label{display:flex;gap:8px;align-items:flex-start;color:var(--ink);cursor:pointer}
+.note{background:var(--stone-2);border-left:3px solid var(--verdigris);padding:7px 10px;margin:8px 0;font-size:12px;color:var(--ink);border-radius:0 3px 3px 0}
+.note.warn{border-left-color:var(--bronze)}
+.note.bad{border-left-color:var(--blood)}
+.sentence{background:var(--stone-0);border:1px solid var(--stone-3);border-radius:3px;padding:8px 10px;margin:8px 0 12px;line-height:1.6}
+.sentence em{font-style:normal;color:var(--bronze-hi)}
+.link{background:none;border:0;padding:0;color:var(--sky);cursor:pointer;text-align:left;text-decoration:underline;text-decoration-color:#6aa7e855;text-underline-offset:2px}
+.link:hover{color:#a8cdf5}
+.reflist{display:flex;flex-direction:column;gap:3px;margin:4px 0}
+.list{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:4px 6px;border:0;border-bottom:1px solid var(--stone-2);background:none;
+  cursor:pointer;text-align:left;width:100%}
+.row:hover{background:var(--stone-2)}
+.row.sel{background:var(--stone-3);box-shadow:inset 3px 0 0 var(--bronze)}
+.row .n{font:12px var(--num);color:var(--bronze)}
+.row .d{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .x{font:11px var(--num);color:var(--faint)}
+.row.empty .d{color:var(--faint)}
+.listbar{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.listbar input[type=search]{flex:1;min-width:90px}
+.listbar label{display:flex;gap:5px;align-items:center;color:var(--dim);font-size:12px;cursor:pointer}
+.seg{display:flex;border:1px solid var(--mortar);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.seg button{flex:1;background:var(--stone-2);border:0;border-right:1px solid var(--mortar);padding:5px 4px;cursor:pointer;color:var(--dim);font-size:12px}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--stone-3);color:var(--bronze-hi)}
+.issue{display:grid;grid-template-columns:18px 1fr;gap:6px;padding:6px 4px;border-bottom:1px solid var(--stone-2);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left}
+.issue:hover{background:var(--stone-2)}
+.issue i{width:10px;height:10px;border-radius:50%;margin-top:4px;background:var(--bronze)}
+.issue.err i{background:var(--blood)} .issue.info i{background:var(--faint)}
+.guide h3{font:600 14px var(--ui);color:var(--bronze-hi);margin:16px 0 6px}
+.guide h3:first-child{margin-top:0}
+.guide p,.guide li{color:var(--ink);margin-bottom:6px;max-width:60ch}
+.guide ul,.guide ol{padding-left:18px;margin:0 0 8px}
+.guide table{border-collapse:collapse;margin:6px 0 10px;font-size:12px}
+.guide td,.guide th{border-bottom:1px solid var(--stone-3);padding:3px 10px 3px 0;text-align:left;vertical-align:top}
+.guide th{color:var(--verdigris);font-weight:600}
+.guide code{font-family:var(--num);color:var(--bronze-hi)}
+textarea{width:100%;resize:vertical}
+.txtrow{display:grid;grid-template-columns:26px 1fr 34px;gap:6px;align-items:center;margin-bottom:3px}
+.txtrow .n{font:12px var(--num);color:var(--bronze)}
+.txtrow .len{font:11px var(--num);color:var(--faint);text-align:right}
+.txtrow input{width:100%;font-family:var(--num)}
+.hintrow{display:grid;grid-template-columns:26px 62px 1fr;gap:6px;align-items:center;margin-bottom:3px}
+.pathcv{background:var(--stone-0);border:1px solid var(--stone-3);display:block;margin:4px 0;image-rendering:pixelated}
+
+/* welcome */
+#welcome{position:absolute;inset:46px 0 0 0;display:flex;align-items:center;justify-content:center;background:
+  linear-gradient(#15181dcc,#15181dcc),repeating-linear-gradient(0deg,#262b34 0 30px,#1d2128 30px 32px),
+  repeating-linear-gradient(90deg,#262b34 0 62px,#1d2128 62px 64px);z-index:20}
+#welcome .card{max-width:560px;padding:34px 38px;background:var(--stone-1);border:1px solid var(--mortar);border-top:3px solid var(--bronze);box-shadow:0 20px 60px #000c}
+#welcome h1{font:700 34px/1 Georgia,serif;letter-spacing:.4em;color:var(--bronze-hi);text-shadow:0 2px 0 #6b3f12,0 4px 0 #1a0f04;margin-bottom:6px}
+#welcome .lead{color:var(--dim);margin-bottom:18px}
+#welcome p{margin-bottom:10px;max-width:58ch}
+#welcome ul{margin:0 0 16px;padding-left:18px;color:var(--dim)}
+#welcome .btn{font-size:15px;padding:9px 18px}
+#toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);background:var(--stone-3);border:1px solid var(--mortar);border-left:4px solid var(--verdigris);
+  padding:9px 16px;border-radius:3px;z-index:50;opacity:0;pointer-events:none;transition:opacity .15s;max-width:70vw;box-shadow:0 8px 24px #000a}
+#toast.show{opacity:1}
+#toast.bad{border-left-color:var(--blood)}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+
+
+#welcome .credit{margin:22px 0 0;padding-top:12px;border-top:1px solid var(--stone-3);color:var(--dim);font-size:12px}
+#welcome .credit b{color:var(--bronze-hi);font-weight:600}
+.guide .credit{margin-top:18px;padding-top:10px;border-top:1px solid var(--stone-3);color:var(--dim)}
+.guide .credit b{color:var(--bronze-hi)}
+
+</style>
+</head>
+<body>
+<header id="top">
+  <div id="brand" title="Gods Level Editor by DarkSoL (Discord: darksol41)">GODS<small>level editor</small></div>
+  <button class="btn" id="bOpen">Open game folder</button>
+  <select id="levelSel" hidden title="Level map"></select>
+  <div class="sep"></div>
+  <button class="btn" id="bUndo" disabled title="Undo (Ctrl+Z)">Undo</button>
+  <button class="btn" id="bRedo" disabled title="Redo (Ctrl+Y)">Redo</button>
+  <div class="grow"></div>
+  <span id="dirty"></span>
+  <div class="menu">
+    <button class="btn" id="bView" disabled>Show</button>
+    <div class="pop" id="viewPop" hidden></div>
+  </div>
+  <div class="menu">
+    <button class="btn" id="bMore" disabled>File</button>
+    <div class="pop" id="morePop" hidden>
+      <button id="bDownload">Download both level files</button>
+      <button id="bPng">Export map as PNG</button>
+      <button id="bRevert">Reload level from disk</button>
+    </div>
+  </div>
+  <button class="btn main" id="bSave" disabled title="Save (Ctrl+S)">Save level</button>
+  <input type="file" id="fDir" webkitdirectory multiple hidden>
+</header>
+
+<div id="work" hidden>
+  <nav id="tools">
+    <div id="modes">
+      <button data-m="tiles"><b>1</b>Tiles</button>
+      <button data-m="solid"><b>2</b>Solids</button>
+      <button data-m="trig"><b>3</b>Triggers</button>
+      <button data-m="obj"><b>4</b>Objects</button>
+      <button data-m="pick"><b>5</b>Select</button>
+    </div>
+    <div class="pane" id="toolPane"></div>
+  </nav>
+  <section id="stage">
+    <canvas id="cv" tabindex="0"></canvas>
+    <div id="zoomBox"><button id="zOut" title="Zoom out">&minus;</button><span id="zLbl">100%</span><button id="zIn" title="Zoom in">+</button></div>
+    <div id="status"></div>
+  </section>
+  <aside id="side">
+    <div id="tabs"></div>
+    <div class="scroll" id="sidePane"></div>
+  </aside>
+</div>
+
+<div id="welcome">
+  <div class="card">
+    <h1>GODS</h1>
+    <p class="lead">Level editor for the DOS version (Bitmap Brothers, 1992)</p>
+    <p>Open the folder that holds <b>GAME.EXE</b> and the <b>PLEV*.MAP</b> files. The editor reads the maps, tiles, sprites and the
+       <b>PALFILS</b> files that carry every trigger, monster and mechanism.</p>
+    <ul>
+      <li>Nothing leaves your computer.</li>
+      <li>In Chrome or Edge, <b>Save level</b> writes straight into the folder and keeps the original files in <b>EDITOR_BACKUP</b>.</li>
+      <li>In other browsers the changed files are downloaded instead.</li>
+    </ul>
+    <button class="btn main" id="bOpen2">Open game folder</button>
+    <p class="credit">Created by <b>DarkSoL</b> &nbsp;&middot;&nbsp; Discord: <b>darksol41</b></p>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+/* ============================================================================
+   PKWARE DCL "implode" codec (every game data file is stored in this format)
+   explode(): port of zlib/contrib/blast.  implode(): greedy/lazy LZ77 encoder.
+   ========================================================================== */
+const Codec = (() => {
+  const LITLEN = [11,124,8,7,28,7,188,13,76,4,10,8,12,10,12,10,8,23,8,9,7,6,7,8,7,6,55,8,23,24,12,11,7,9,11,12,6,7,22,5,7,24,6,11,9,6,7,22,7,11,38,7,9,8,25,11,8,11,9,12,8,12,5,38,5,38,5,11,7,5,6,21,6,10,53,8,7,24,10,27,44,253,253,253,252,252,252,13,12,45,12,45,12,61,12,45,44,173];
+  const LENLEN = [2,35,36,53,38,23], DISTLEN = [2,20,53,230,247,151,248];
+  const BASE = [3,2,4,5,6,7,8,9,10,12,16,24,40,72,136,264];
+  const EXTRA = [0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,8];
+  const MAXBITS = 13;
+
+  function huff(rep) {
+    const length = [];
+    for (const b of rep) { const n = (b >> 4) + 1, l = b & 15; for (let i = 0; i < n; i++) length.push(l); }
+    const count = new Array(MAXBITS + 1).fill(0);
+    for (const l of length) count[l]++;
+    const offs = new Array(MAXBITS + 2).fill(0);
+    for (let l = 1; l < MAXBITS; l++) offs[l + 1] = offs[l] + count[l];
+    const symbol = new Array(length.length).fill(0);
+    for (let s = 0; s < length.length; s++) if (length[s]) symbol[offs[length[s]]++] = s;
+    return { count, symbol };
+  }
+  const LITC = huff(LITLEN), LENC = huff(LENLEN), DISTC = huff(DISTLEN);
+
+  function explode(data) {
+    let pos = 0, bitbuf = 0, bitcnt = 0;
+    let out = new Uint8Array(65536), n = 0;
+    const put = b => { if (n === out.length) { const o = new Uint8Array(n * 2); o.set(out); out = o; } out[n++] = b; };
+    const bits = need => {
+      let v = bitbuf;
+      while (bitcnt < need) {
+        if (pos >= data.length) throw new Error('compressed stream is truncated');
+        v |= data[pos++] << bitcnt; bitcnt += 8;
+      }
+      bitbuf = v >>> need; bitcnt -= need;
+      return v & ((1 << need) - 1);
+    };
+    const decode = h => {
+      let code = 0, first = 0, index = 0, len = 1;
+      for (;;) {
+        if (bitcnt === 0) {
+          if (pos >= data.length) throw new Error('compressed stream is truncated');
+          bitbuf = data[pos++]; bitcnt = 8;
+        }
+        const bit = bitbuf & 1; bitbuf >>>= 1; bitcnt--;
+        code |= bit ^ 1;
+        const c = h.count[len];
+        if (code < first + c) return h.symbol[index + (code - first)];
+        index += c; first += c; first <<= 1; code <<= 1; len++;
+        if (len > MAXBITS) throw new Error('invalid Huffman code');
+      }
+    };
+    const lit = bits(8), dict = bits(8);
+    if (lit > 1 || dict < 4 || dict > 6) throw new Error('not a PKWARE-compressed file');
+    for (;;) {
+      if (bits(1)) {
+        const s = decode(LENC), len = BASE[s] + bits(EXTRA[s]);
+        if (len === 519) break;
+        const sh = len === 2 ? 2 : dict;
+        const dist = (decode(DISTC) << sh) + bits(sh) + 1;
+        if (dist > n) throw new Error('back-reference before start of data');
+        for (let i = 0; i < len; i++) put(out[n - dist]);
+      } else put(lit ? decode(LITC) : bits(8));
+    }
+    return out.slice(0, n);
+  }
+
+  function encFor(rep) {
+    const h = huff(rep), e = {}; let first = 0, index = 0;
+    for (let len = 1; len <= MAXBITS; len++) {
+      const c = h.count[len];
+      for (let k = 0; k < c; k++) e[h.symbol[index + k]] = [first + k, len];
+      index += c; first = (first + c) << 1;
+    }
+    return e;
+  }
+  const ENC_LEN = encFor(LENLEN), ENC_DIST = encFor(DISTLEN);
+  function lenSym(len) {
+    for (let s = 15; s >= 0; s--) if (BASE[s] <= len && len <= BASE[s] + (1 << EXTRA[s]) - 1) return [s, len - BASE[s]];
+    throw new Error('bad match length');
+  }
+
+  function implode(data, dictBits = 6) {
+    const out = []; let bb = 0, bc = 0;
+    const bits = (v, n) => { for (let i = 0; i < n; i++) { bb |= ((v >> i) & 1) << bc; if (++bc === 8) { out.push(bb); bb = 0; bc = 0; } } };
+    const code = (s, t) => { const [c, l] = t[s]; for (let i = l - 1; i >= 0; i--) bits(((c >> i) & 1) ^ 1, 1); };
+    bits(0, 8); bits(dictBits, 8);
+    const win = 1 << (dictBits + 6), MAXM = 518, CHAIN = 512, n = data.length;
+    const heads = new Map(), key = i => (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
+    const addH = i => { if (i + 2 >= n) return; const k = key(i); let a = heads.get(k); if (!a) { a = []; heads.set(k, a); } a.push(i); };
+    const find = p0 => {
+      if (p0 + 2 >= n) return [0, 0];
+      let bl = 0, bd = 0, tried = 0; const maxl = Math.min(MAXM, n - p0);
+      const ch = heads.get(key(p0));
+      if (ch) for (let i = ch.length - 1; i >= 0; i--) {
+        const p = ch[i], d = p0 - p;
+        if (d > win) break;
+        if (++tried > CHAIN) break;
+        if (bl >= 3 && data[p + bl] !== data[p0 + bl]) continue;
+        let l = 0; while (l < maxl && data[p + l] === data[p0 + l]) l++;
+        if (l > bl) { bl = l; bd = d; if (l === maxl) break; }
+      }
+      return [bl, bd];
+    };
+    const find2 = p0 => {
+      if (p0 + 1 >= n) return [0, 0];
+      const lo = Math.max(0, p0 - 256);
+      for (let p = p0 - 1; p >= lo; p--) if (data[p] === data[p0] && data[p + 1] === data[p0 + 1]) return [2, p0 - p];
+      return [0, 0];
+    };
+    const cost = (l, d) => {
+      if (l < 2) return null;
+      const sh = l === 2 ? 2 : dictBits, dd = d - 1;
+      if ((dd >> sh) > 63) return null;
+      const [s] = lenSym(l);
+      return 1 + ENC_LEN[s][1] + EXTRA[s] + ENC_DIST[dd >> sh][1] + sh;
+    };
+    let i = 0;
+    while (i < n) {
+      let [bl, bd] = find(i);
+      if (bl < 3) { const r = find2(i); bl = r[0]; bd = r[1]; }
+      if (bl >= 2) {
+        const c = cost(bl, bd);
+        if (c !== null && i + 1 < n) {
+          let [nl, nd] = find(i + 1);
+          if (nl < 3) { const r = find2(i + 1); nl = r[0]; nd = r[1]; }
+          const nc = nl >= 2 ? cost(nl, nd) : null;
+          if (nc !== null && (nl * 8 - nc - 9) > (bl * 8 - c)) { bits(0, 1); bits(data[i], 8); addH(i); i++; continue; }
+        }
+        if (c === null || c >= bl * 8) bl = 0;
+      }
+      if (bl >= 2) {
+        const [s, ex] = lenSym(bl);
+        bits(1, 1); code(s, ENC_LEN);
+        if (EXTRA[s]) bits(ex, EXTRA[s]);
+        const sh = bl === 2 ? 2 : dictBits, d = bd - 1;
+        code(d >> sh, ENC_DIST); bits(d & ((1 << sh) - 1), sh);
+        for (let k = 0; k < bl; k++) addH(i + k);
+        i += bl;
+      } else { bits(0, 1); bits(data[i], 8); addH(i); i++; }
+    }
+    bits(1, 1); code(15, ENC_LEN); bits(255, 8);   // end-of-stream marker (length 519)
+    code(0, ENC_DIST); bits(0, dictBits);            // padding, as the original packer writes it
+    if (bc) out.push(bb);
+    return new Uint8Array(out);
+  }
+
+  /* Atari DEGAS .PI1 picture: 320x200, 16 colours, 4 interleaved bitplanes. */
+  function decodePI1(raw) {
+    const d = explode(raw);
+    if (d.length < 34 + 32000) throw new Error('picture file is too short');
+    const be = o => (d[o] << 8) | d[o + 1];
+    const pal = [];
+    for (let i = 0; i < 16; i++) {
+      const v = be(2 + i * 2);
+      pal.push([Math.round(((v >> 8) & 7) * 255 / 7), Math.round(((v >> 4) & 7) * 255 / 7), Math.round((v & 7) * 255 / 7)]);
+    }
+    const idx = new Uint8Array(320 * 200);
+    for (let y = 0; y < 200; y++) {
+      const row = 34 + y * 160;
+      for (let g = 0; g < 20; g++) {
+        const p0 = be(row + g * 8), p1 = be(row + g * 8 + 2), p2 = be(row + g * 8 + 4), p3 = be(row + g * 8 + 6);
+        for (let b = 0; b < 16; b++) {
+          const m = 1 << (15 - b);
+          idx[y * 320 + g * 16 + b] = ((p0 & m) ? 1 : 0) | ((p1 & m) ? 2 : 0) | ((p2 & m) ? 4 : 0) | ((p3 & m) ? 8 : 0);
+        }
+      }
+    }
+    return { pal, idx };
+  }
+
+  /* Sprite sheet index (.DAT): BE16 count, then count x {w-1, h-1, ?, x, y}. */
+  function decodeDAT(raw) {
+    const d = explode(raw), be = o => (d[o] << 8) | d[o + 1];
+    const n = be(0), out = [];
+    for (let i = 0; i < n; i++) { const o = 2 + i * 10; out.push({ w: be(o) + 1, h: be(o + 2) + 1, x: be(o + 6), y: be(o + 8) }); }
+    return out;
+  }
+  return { explode, implode, decodePI1, decodeDAT };
+})();
+if (typeof module !== 'undefined') module.exports = Codec;
+
+/* ============================================================================
+   GODS (Bitmap Brothers, DOS 1992) level format
+   Everything here was recovered by disassembling GAME.EXE and verified in-game.
+   All multi-byte values in the data files are big-endian (Atari ST heritage).
+
+   PLEVnX.MAP (after decompression)
+     BE16 N, 2 bytes, N words        editor leftovers, skipped by the game
+     128x64 bytes                    tile layer      (0 = empty, v = tile v-1)
+     128x64 bytes                    collision layer (0 empty, 1 solid, 2 ladder,
+                                                      v>=3 = trigger number v-2)
+     200 x 6                         objects  {x, y, type}
+     1840                            40 messages: 40 x {word, offset} + strings
+     100 x 24                        puzzles  (conditions -> action)
+
+   PALFILS.0Xn ("all files", after decompression, 8760 bytes)
+        0  100 x 8   flying waves            (trigger type 1)
+      804  253 x 4   triggers {type, param}
+     1816  100 x 16  ground patrols          (trigger type 2)
+     3416   50 x 22  flyer gangs             (trigger type 5)
+     4516   50 x 22  walker gangs / thieves  (trigger type 4)
+     5616   64 x 6   switches {x, y, state}
+     6000   30 x 6   teleports {stoneX, destX, destY}
+     6180   20 x 6   trapdoors {x, y, open}
+     6300   25 x 28  moving blocks
+     7000   40 x 2   hint keys (x of the hint tablet object)
+     7080   40 x 40  hint strings
+   ========================================================================== */
+const W = 128, H = 64, TW = 32, TH = 16;
+const NOBJ = 200, NTEXT = 40, TEXT_BYTES = 1840, NHINT = 40;
+
+/* Constants that live inside GAME.EXE (not in the level files). */
+const LEVELS = {
+  1: { name: 'The City',       start: [64, 944],   doorOpen: 59, doorClosed: 56, trapOpen: 3,   trapClosed: 32, doorSide: 7,
+       tileCount: { A: 110, B: 126 }, fly: [[0,32,32],[66,32,32],[6,32,32]],
+       ground: [[12,32,32],[30,32,32],[48,32,32],[48,32,32],[48,32,32],[82,24,24],[82,24,24],[82,24,24]],
+       sections: [[3,'World one'],[6,'World two (then map B loads)'],[8,'(silent)'],[12,'Level one']] },
+  2: { name: 'The Temple',     start: [3888, 112], doorOpen: 91, doorClosed: 85, trapOpen: 60,  trapClosed: 76, doorSide: 2,
+       tileCount: { A: 133, B: 118 }, fly: [[54,32,32],[62,32,32],[54,32,32],[54,32,32]],
+       ground: [[0,32,32],[18,32,32],[71,32,32],[75,24,24],[36,32,32],[71,24,24],[71,24,24],[71,24,24]],
+       sections: [[6,'World one'],[10,'World two (then map B loads)'],[11,'(silent)'],[15,'(silent)'],[16,'Level two']] },
+  3: { name: 'The Labyrinth',  start: [64, 48],    doorOpen: 71, doorClosed: 43, trapOpen: 34,  trapClosed: 33, doorSide: 4,
+       tileCount: { A: 124, B: 110 }, fly: [[36,32,32],[73,32,32],[36,32,32]],
+       ground: [[0,32,32],[0,32,32],[18,32,32],[66,24,24],[0,32,32],[0,32,32],[0,32,32]],
+       sections: [[100,'World one (ends by special case)'],[6,'World two'],[100,'Level three']] },
+  4: { name: 'The Underworld', start: [384, 496],  doorOpen: 96, doorClosed: 43, trapOpen: 108, trapClosed: 98, doorSide: 75,
+       tileCount: { A: 118, B: 123 }, fly: [[46,32,32],[74,32,32],[54,32,48],[81,32,32]],
+       ground: [[0,32,32],[36,32,32],[18,32,32],[97,24,24],[36,32,32],[36,32,32],[36,32,32]],
+       sections: [[5,'World one'],[6,'(silent)'],[9,'(silent)'],[12,'World two'],[20,'Game']] },
+};
+const WEAPONS = ['knife','time bomb','fireball','flame','lightning bolt','throwing star','spear','axe','hunter','magic axe','mace'];
+const ITEM_CATEGORY = ['power-up', 'treasure', 'inventory item', 'switch', 'obstacle', 'scenery'];
+
+const TRIGGER_TYPES = [
+  { id: 0,  name: 'Nothing',          table: null,      help: 'Unused trigger. A puzzle can still test whether it has fired.' },
+  { id: 1,  name: 'Flying wave',      table: 'wave',    help: 'Launches a formation that follows a path from the level’s .PAT file.' },
+  { id: 2,  name: 'Ground patrol',    table: 'ground',  help: 'Spawns walking monsters at a fixed position.' },
+  { id: 3,  name: 'Puzzle',           table: 'puzzle',  help: 'Checks up to three conditions each time the player stands on the cell; when all hold, runs the action once.' },
+  { id: 4,  name: 'Walker gang',      table: 'walker',  help: 'Spawns intelligent walking monsters (thieves) that can steal items.' },
+  { id: 5,  name: 'Flyer gang',       table: 'flyer',   help: 'Spawns intelligent flying monsters that hunt the player.' },
+  { id: 6,  name: 'Checkpoint',       table: null,      help: 'Sets the restart point and counts one step of world progress.' },
+  { id: 7,  name: 'Move block (command 1)', table: 'block', help: 'Runs movement command 1 of a moving block.' },
+  { id: 8,  name: 'Move block (command 2)', table: 'block', help: 'Runs movement command 2 of a moving block.' },
+  { id: 9,  name: 'Move block (command 3)', table: 'block', help: 'Runs movement command 3 of a moving block.' },
+  { id: 10, name: 'Move block (command 4)', table: 'block', help: 'Runs movement command 4 of a moving block.' },
+  { id: 11, name: 'Start the guardian', table: null,    help: 'Begins the end-of-level boss fight.' },
+];
+
+/* Puzzle conditions.  arg: what the parameter refers to. */
+const CONDITIONS = [
+  { id: 0,  name: 'Always',                      arg: null },
+  { id: 1,  name: 'Player carries item',         arg: 'item' },
+  { id: 2,  name: 'Player does not carry item',  arg: 'item' },
+  { id: 3,  name: 'Player has weapon',           arg: 'weapon' },
+  { id: 4,  name: 'Player does not have weapon', arg: 'weapon' },
+  { id: 5,  name: 'Trigger has fired',           arg: 'trigger' },
+  { id: 6,  name: 'Trigger has not fired',       arg: 'trigger' },
+  { id: 7,  name: 'Energy is above',             arg: 'num', unit: 'of 24' },
+  { id: 8,  name: 'Energy is below',             arg: 'num', unit: 'of 24' },
+  { id: 9,  name: 'Timer is past',               arg: 'num', unit: '× 5 s' },
+  { id: 10, name: 'Timer is under',              arg: 'num', unit: '× 5 s' },
+  { id: 11, name: 'Switch is on',                arg: 'switch' },
+  { id: 12, name: 'Switch is off',               arg: 'switch' },
+  { id: 13, name: 'Score is at least',           arg: 'num', unit: '× 5000' },
+  { id: 14, name: 'Score is under (crashes the game)', arg: 'num', unit: '× 5000' },
+  { id: 15, name: 'Lives are more than',         arg: 'num' },
+  { id: 16, name: 'Lives are fewer than',        arg: 'num' },
+];
+
+/* Puzzle actions.  pos: uses X/Y.  arg: meaning of the parameter. */
+const ACTIONS = [
+  { id: 0,  name: 'Make an item appear',        pos: true,  arg: 'item',    help: 'Drops the item at X,Y with a flash.' },
+  { id: 1,  name: 'Make a weapon appear',       pos: true,  arg: 'weapon',  help: 'Drops the weapon at X,Y.' },
+  { id: 2,  name: 'Open door (tiles)',          pos: true,  arg: null,      help: 'Replaces the 2×3 door tiles at X,Y with the open door and removes its wall.' },
+  { id: 3,  name: 'Open passage door',          pos: true,  arg: 'cell',    help: 'Shows a doorway at X,Y. Pushing up inside it moves the player to the destination cell.' },
+  { id: 4,  name: 'Open level exit',            pos: true,  arg: 'exit',    help: 'Shows a doorway at X,Y that ends the level when entered.' },
+  { id: 5,  name: 'Fire another trigger',       pos: false, arg: 'trigger', help: 'Runs a trigger as if the player had touched its cell. This is how one event chains into the next.' },
+  { id: 6,  name: 'Destroy obstacle',           pos: true,  arg: null,      help: 'Blows up obstacle objects (spikes and the like) within 12 pixels of X,Y.' },
+  { id: 7,  name: 'Open trapdoor',              pos: true,  arg: null,      help: 'Opens the trapdoor whose position is exactly X,Y.' },
+  { id: 8,  name: 'Close trapdoor',             pos: true,  arg: null,      help: 'Closes the trapdoor whose position is exactly X,Y.' },
+  { id: 9,  name: 'Close door (tiles)',         pos: true,  arg: null,      help: 'Puts the closed door tiles back at X,Y and makes it solid.' },
+  { id: 10, name: 'Take weapon away',           pos: false, arg: 'weapon',  help: 'Removes the weapon from the player.' },
+  { id: 11, name: 'Message only (11)',          pos: false, arg: 'num',     help: 'Does nothing in the DOS version except show the message.' },
+  { id: 12, name: 'Message only (12)',          pos: false, arg: 'num',     help: 'Does nothing in the DOS version except show the message.' },
+  { id: 13, name: 'Message only (13)',          pos: false, arg: 'num',     help: 'Does nothing in the DOS version except show the message.' },
+  { id: 14, name: 'Restart the timer',          pos: false, arg: null,      help: 'Sets the puzzle timer back to zero (used for speed bonuses).' },
+];
+
+const EXIT_RULES = ['Never removed', 'Never removed', 'Removed when it leaves the screen on the left', 'Removed when it leaves on the right',
+                    'Removed when it leaves at the top', 'Removed when it leaves at the bottom'];
+const STEAL_MODES = ['Does not pick up', 'Picks up, drops at random', 'Picks up, keeps until killed', 'Picks up, drops at random'];
+const SHOT_MODES = ['Straight ahead', 'Towards the player, scattered', 'Aimed at the player', 'Aimed at the player'];
+const BLOCK_CMDS = [[-1, 'Stop'], [0, 'Go to next waypoint'], [1, 'Go to previous waypoint'], [2, 'Go to waypoint 1'], [3, 'Go to waypoint 2'], [4, 'Go to waypoint 3'], [5, 'Go to waypoint 4']];
+
+/* ---- record tables ---------------------------------------------------- */
+/* field: [key, type, offset, label, kind?, help?]
+   types: u8 s8 u16 s16 hi4 lo4 | bits:<shift>:<width> (inside BE16 at offset) */
+const F = (key, type, off, label, kind, help) => ({ key, type, off, label, kind, help });
+const TABLES = {
+  trigger: { title: 'Triggers', one: 'Trigger', buf: 'alf', base: 804, size: 4, count: 253, first: 1, fields: [
+    F('type', 'u16', 0, 'Type', 'trigtype'), F('param', 'u16', 2, 'Target', 'trigparam') ] },
+  puzzle: { title: 'Puzzles', one: 'Puzzle', buf: 'map', base: 0, size: 24, count: 100, fields: [
+    F('c1', 'u16', 0, 'Condition 1', 'cond'), F('p1', 'u16', 2, '', 'condarg'),
+    F('c2', 'u16', 4, 'Condition 2', 'cond'), F('p2', 'u16', 6, '', 'condarg'),
+    F('c3', 'u16', 8, 'Condition 3', 'cond'), F('p3', 'u16', 10, '', 'condarg'),
+    F('x', 's16', 12, 'X', 'px'), F('y', 's16', 14, 'Y', 'py'),
+    F('action', 'bits:0:15', 16, 'Action', 'action'),
+    F('consume', 'bits:15:1', 16, 'Use up the items named in the conditions', 'flag'),
+    F('param', 'u16', 18, 'Parameter', 'actionarg'),
+    F('text', 'u16', 20, 'Message', 'text'),
+    F('unk', 'u16', 22, 'Unused word', 'raw') ] },
+  wave: { title: 'Flying waves', one: 'Wave', buf: 'alf', base: 0, size: 8, count: 100, fields: [
+    F('count', 'u8', 0, 'Monsters'), F('path', 'u8', 1, 'Flight path', 'path'),
+    F('spacing', 'u16', 2, 'Frames between monsters'), F('hp', 'u8', 4, 'Hit points'),
+    F('enemy', 'u8', 5, 'Monster', 'enemyF'),
+    F('aimed', 'hi4', 6, 'Shots are aimed at the player', 'flag'), F('fire', 'lo4', 6, 'Fire rate', 'rate', '0 = never shoots, 15 = fastest'),
+    F('drop', 'u8', 7, 'Reward when all are killed', 'drop') ] },
+  ground: { title: 'Ground patrols', one: 'Patrol', buf: 'alf', base: 1816, size: 16, count: 100, fields: [
+    F('x', 's16', 0, 'X', 'px'), F('y', 's16', 2, 'Y', 'py'),
+    F('dir', 'u8', 4, 'Faces', 'dir'), F('exit', 'u8', 5, 'Leaving the screen', 'exit'),
+    F('spacing', 'u16', 6, 'Frames between monsters'), F('count', 'u8', 8, 'Monsters'), F('hp', 'u8', 9, 'Hit points'),
+    F('enemy', 'u16', 10, 'Monster', 'enemyG'),
+    F('aimed', 'u8', 12, 'Shots are aimed at the player', 'flag'), F('fire', 'u8', 13, 'Fire rate', 'rate', '0 = never shoots, 15 = fastest'),
+    F('drop', 'u8', 14, 'Reward when all are killed', 'drop'), F('unk', 'u8', 15, 'Unused byte', 'raw') ] },
+  walker: { title: 'Walker gangs', one: 'Walker gang', buf: 'alf', base: 4516, size: 22, count: 50, fields: null },
+  flyer:  { title: 'Flyer gangs',  one: 'Flyer gang',  buf: 'alf', base: 3416, size: 22, count: 50, fields: null },
+  switch: { title: 'Switches', one: 'Switch', buf: 'alf', base: 5616, size: 6, count: 64, fields: [
+    F('x', 's16', 0, 'X', 'px'), F('y', 's16', 2, 'Y', 'py'), F('state', 'u16', 4, 'Object type (odd = on)', 'raw') ] },
+  teleport: { title: 'Teleports', one: 'Teleport', buf: 'alf', base: 6000, size: 6, count: 30, fields: [
+    F('src', 'u16', 0, 'X of the teleport stone'), F('x', 'u16', 2, 'Destination X', 'px'), F('y', 'u16', 4, 'Destination Y', 'py') ] },
+  trapdoor: { title: 'Trapdoors', one: 'Trapdoor', buf: 'alf', base: 6180, size: 6, count: 20, fields: [
+    F('x', 's16', 0, 'X', 'px'), F('y', 's16', 2, 'Y', 'py'), F('open', 'u16', 4, 'Starts open', 'flag') ] },
+  block: { title: 'Moving blocks', one: 'Block', buf: 'alf', base: 6300, size: 28, count: 25, fields: [
+    F('x', 's16', 0, 'X', 'px'), F('y', 's16', 2, 'Y', 'py'),
+    F('unk', 'u8', 4, 'Unknown byte', 'raw'), F('speed', 'u8', 5, 'Speed', null, 'pixels per frame, minus one'),
+    F('x1', 's16', 6, 'Waypoint 1 X', 'px'), F('y1', 's16', 8, 'Waypoint 1 Y', 'py'),
+    F('x2', 's16', 10, 'Waypoint 2 X', 'px'), F('y2', 's16', 12, 'Waypoint 2 Y', 'py'),
+    F('x3', 's16', 14, 'Waypoint 3 X', 'px'), F('y3', 's16', 16, 'Waypoint 3 Y', 'py'),
+    F('x4', 's16', 18, 'Waypoint 4 X', 'px'), F('y4', 's16', 20, 'Waypoint 4 Y', 'py'),
+    F('cmd1', 's8', 22, 'Command 1 (trigger type 7)', 'blockcmd'), F('cmd2', 's8', 23, 'Command 2 (trigger type 8)', 'blockcmd'),
+    F('cmd3', 's8', 24, 'Command 3 (trigger type 9)', 'blockcmd'), F('cmd4', 's8', 25, 'Command 4 (trigger type 10)', 'blockcmd'),
+    F('wide', 'bits:0:3', 26, 'Width in cells, minus one', null), F('ghost', 'bits:7:1', 26, 'Not solid (player passes through)', 'flag'),
+    F('tall', 'u8', 27, 'Height in cells, minus one') ] },
+};
+/* bits fields at offset 26 of a block are in a single byte: handled as 8-bit below */
+TABLES.block.fields.find(f => f.key === 'wide').type = 'bits8:0:3';
+TABLES.block.fields.find(f => f.key === 'ghost').type = 'bits8:7:1';
+
+const gangFields = enemyKind => [
+  F('count', 'u8', 0, 'Monsters'), F('hp', 'u8', 1, 'Hit points'),
+  F('cx', 'u8', 18, 'Start cell X', 'cellx'), F('cy', 'u8', 19, 'Start cell Y', 'celly'),
+  F('spacing', 'u8', 20, 'Frames between monsters'),
+  F('enemy', 'u8', 7, 'Monster', enemyKind),
+  F('stealItem', 'bits:0:2', 4, 'Items', 'steal'), F('stealWeapon', 'bits:2:2', 4, 'Weapons', 'steal'),
+  F('shotMode', 'bits:4:2', 4, 'Shots', 'shot'),
+  F('shotSpeed', 'hi4', 6, 'Shot speed'), F('fire', 'lo4', 6, 'Fire rate', 'rate', '0 = never shoots, 15 = fastest'),
+  F('leader', 'bits:8:1', 4, 'One random member is a leader with double hit points', 'flag'),
+  F('modeA', 'lo4', 8, 'Behaviour A', null, 'index into the engine’s behaviour table'),
+  F('modeB', 'hi4', 8, 'Behaviour B'),
+  F('prob', 'u8', 9, 'Chance of behaviour A', null, '0–127'),
+  F('follow', 'u8', 10, 'Tendency to follow the leader', null, '0–127'),
+  F('speed', 'u8', 11, 'Top speed'), F('accel', 'u8', 12, 'Acceleration'),
+  F('range', 'u8', 13, 'Reach'), F('timer', 'u8', 14, 'Timer'), F('avoid', 'u8', 15, 'Wall avoidance', null, '0 = flies through walls'),
+  F('reward', 'u16', 16, 'Reward when all are killed', 'reward16'),
+  F('form', 'bits:6:2', 4, 'Formation bits', 'raw'), F('flagsHi', 'bits:9:7', 4, 'Other flag bits', 'raw'),
+  F('unk2', 'u8', 2, 'Unused byte 2', 'raw'), F('unk3', 'u8', 3, 'Unused byte 3', 'raw'), F('unk21', 'u8', 21, 'Unused byte 21', 'raw'),
+];
+TABLES.walker.fields = gangFields('enemyG');
+TABLES.flyer.fields = gangFields('enemyF');
+
+class Level {
+  /** map, alf: decompressed Uint8Arrays; num: 1..4; letter: 'A' | 'B' */
+  constructor(map, alf, num, letter) {
+    this.map = map; this.alf = alf; this.num = num; this.letter = letter;
+    this.info = LEVELS[num];
+    this.hdr = 4 + 2 * ((map[0] << 8) | map[1]);
+    this.T = this.hdr; this.C = this.T + W * H; this.O = this.C + W * H;
+    this.X = this.O + NOBJ * 6; this.P = this.X + TEXT_BYTES;
+    if (map.length < this.P + 2400) throw new Error('map file is shorter than a Gods level');
+    if (alf.length < 8680) throw new Error('PALFILS file is shorter than expected');
+    this.tileCount = this.info.tileCount[letter];
+  }
+  buf(t) { return t.buf === 'map' ? this.map : this.alf; }
+  base(t) { return t === TABLES.puzzle ? this.P : t.base; }
+
+  /* ---- raw big-endian access ---- */
+  static u16(b, o) { return (b[o] << 8) | b[o + 1]; }
+  static s16(b, o) { const v = (b[o] << 8) | b[o + 1]; return v & 0x8000 ? v - 0x10000 : v; }
+  static w16(b, o, v) { b[o] = (v >> 8) & 255; b[o + 1] = v & 255; }
+
+  /* ---- layers ---- */
+  tile(x, y) { return this.map[this.T + y * W + x]; }
+  setTile(x, y, v) { this.map[this.T + y * W + x] = v & 255; }
+  coll(x, y) { return this.map[this.C + y * W + x]; }
+  setColl(x, y, v) { this.map[this.C + y * W + x] = v & 255; }
+
+  /* ---- generic record fields ---- */
+  get(tn, i, key) {
+    const t = TABLES[tn], f = t.fields.find(f => f.key === key), b = this.buf(t), o = this.base(t) + i * t.size + f.off;
+    return Level.readField(b, o, f.type);
+  }
+  set(tn, i, key, v) {
+    const t = TABLES[tn], f = t.fields.find(f => f.key === key), b = this.buf(t), o = this.base(t) + i * t.size + f.off;
+    Level.writeField(b, o, f.type, v);
+  }
+  static readField(b, o, type) {
+    switch (type) {
+      case 'u8': return b[o];
+      case 's8': return b[o] & 0x80 ? b[o] - 256 : b[o];
+      case 'u16': return Level.u16(b, o);
+      case 's16': return Level.s16(b, o);
+      case 'hi4': return b[o] >> 4;
+      case 'lo4': return b[o] & 15;
+    }
+    const [k, sh, wd] = type.split(':'); const mask = (1 << +wd) - 1;
+    return ((k === 'bits8' ? b[o] : Level.u16(b, o)) >> +sh) & mask;
+  }
+  static writeField(b, o, type, v) {
+    v = Math.round(Number(v) || 0);
+    switch (type) {
+      case 'u8': case 's8': b[o] = v & 255; return;
+      case 'u16': case 's16': Level.w16(b, o, v & 0xFFFF); return;
+      case 'hi4': b[o] = (b[o] & 0x0F) | ((v & 15) << 4); return;
+      case 'lo4': b[o] = (b[o] & 0xF0) | (v & 15); return;
+    }
+    const [k, sh, wd] = type.split(':'); const mask = ((1 << +wd) - 1) << +sh;
+    if (k === 'bits8') b[o] = (b[o] & ~mask) | ((v << +sh) & mask);
+    else Level.w16(b, o, (Level.u16(b, o) & ~mask) | ((v << +sh) & mask));
+  }
+  recBytes(tn, i) { const t = TABLES[tn], o = this.base(t) + i * t.size; return this.buf(t).subarray(o, o + t.size); }
+  /** true when a record is unused */
+  isEmpty(tn, i) {
+    const r = this.recBytes(tn, i);
+    switch (tn) {
+      case 'wave': case 'walker': case 'flyer': return r[0] === 0;
+      case 'ground': return r[8] === 0;
+      case 'switch': case 'trapdoor': return (r[0] & 0x80) !== 0;
+      case 'teleport': return r.every(v => v === 0) || r.every(v => v === 255);
+      case 'block': return !(r[6] | r[7] | r[10] | r[11] | r[14] | r[15] | r[18] | r[19]) || (r[0] & r[1]) === 255;
+      case 'trigger': return r[0] === 0 && r[1] === 0;
+      default: return r.every(v => v === 0);
+    }
+  }
+  clearRec(tn, i) {
+    const r = this.recBytes(tn, i);
+    r.fill(0);
+    if (tn === 'switch') r.fill(255);
+    if (tn === 'trapdoor') { r[0] = r[1] = r[2] = r[3] = 255; }
+    if (tn === 'wave') r[7] = 255;
+    if (tn === 'ground') r[14] = 255;
+    if (tn === 'walker' || tn === 'flyer') { r[16] = r[17] = 255; }
+  }
+  firstFree(tn) { const t = TABLES[tn]; for (let i = 0; i < t.count; i++) if (this.isEmpty(tn, i)) return i; return -1; }
+
+  /* ---- objects ---- */
+  obj(i) { const o = this.O + i * 6, m = this.map; return { i, x: Level.s16(m, o), y: Level.s16(m, o + 2), t: Level.s16(m, o + 4) }; }
+  setObj(i, x, y, t) { const o = this.O + i * 6, m = this.map; Level.w16(m, o, x & 0xFFFF); Level.w16(m, o + 2, y & 0xFFFF); Level.w16(m, o + 4, t & 0xFFFF); }
+  objects() { const a = []; for (let i = 0; i < NOBJ; i++) { const o = this.obj(i); if (o.t >= 0) a.push(o); } return a; }
+  freeObj() { for (let i = 0; i < NOBJ; i++) if (this.obj(i).t < 0) return i; return -1; }
+
+  /* ---- triggers ---- */
+  trig(n) { return { n, type: this.get('trigger', n - 1, 'type'), param: this.get('trigger', n - 1, 'param') }; }
+  cellsOfTrigger(n) { const v = n + 2, out = []; for (let i = 0; i < W * H; i++) if (this.map[this.C + i] === v) out.push([i % W, (i / W) | 0]); return out; }
+
+  /* ---- messages (in the map file) ---- */
+  texts() {
+    const m = this.map, X = this.X, out = [];
+    for (let i = 0; i < NTEXT; i++) {
+      const off = Level.s16(m, X + i * 4 + 2);
+      if (off <= 0 || off >= TEXT_BYTES) { out.push(''); continue; }
+      let s = ''; for (let p = X + off; p < X + TEXT_BYTES && m[p]; p++) s += String.fromCharCode(m[p]);
+      out.push(s);
+    }
+    return out;
+  }
+  /** rewrites the whole message block; returns false if the strings do not fit */
+  setTexts(list) {
+    let need = 0; for (const s of list) if (s) need += s.length + 1;
+    if (need > TEXT_BYTES - NTEXT * 4) return false;
+    const m = this.map, X = this.X; m.fill(0, X, X + TEXT_BYTES);
+    let p = NTEXT * 4;
+    for (let i = 0; i < NTEXT; i++) {
+      const s = list[i] || '';
+      if (!s) continue;
+      Level.w16(m, X + i * 4 + 2, p);
+      for (let k = 0; k < s.length; k++) m[X + p + k] = s.charCodeAt(k) & 127;
+      p += s.length + 1;
+    }
+    return true;
+  }
+
+  /* ---- hints (in PALFILS): key = x of the tablet object ---- */
+  hint(i) {
+    const a = this.alf, x = Level.u16(a, 7000 + i * 2);
+    let s = ''; for (let p = 7080 + i * 40, e = p + 40; p < e && a[p]; p++) s += String.fromCharCode(a[p]);
+    return { i, x, text: s, used: x !== 0xFFFF };
+  }
+  setHint(i, x, text) {
+    const a = this.alf; Level.w16(a, 7000 + i * 2, x & 0xFFFF);
+    a.fill(0, 7080 + i * 40, 7120 + i * 40);
+    text = (text || '').slice(0, 39);
+    for (let k = 0; k < text.length; k++) a[7080 + i * 40 + k] = text.charCodeAt(k) & 127;
+  }
+
+  snapshot() { return { map: this.map.slice(), alf: this.alf.slice() }; }
+  restore(s) { this.map.set(s.map); this.alf.set(s.alf); }
+}
+
+/* Reward codes used by enemy groups: none / weapon / item. */
+function describeDrop(v, none, itemName) {
+  if (v === none || v === 0x3D) return 'nothing';
+  if (v < 11) return 'weapon: ' + WEAPONS[v];
+  return itemName(v - 11);
+}
+
+if (typeof module !== 'undefined') module.exports = { W, H, TW, TH, NOBJ, NTEXT, NHINT, LEVELS, WEAPONS, ITEM_CATEGORY, TRIGGER_TYPES, CONDITIONS, ACTIONS, EXIT_RULES, STEAL_MODES, SHOT_MODES, BLOCK_CMDS, TABLES, Level, describeDrop };
+
+/* ============================================================================
+   Editor application: state, file access, graphics
+   ========================================================================== */
+const $ = id => document.getElementById(id);
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    const v = attrs[k];
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'value') e.value = v;
+    else if (k === 'checked' || k === 'disabled' || k === 'selected') e[k] = !!v;
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) e.append(k.nodeType ? k : document.createTextNode(k));
+  return e;
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function toast(msg, bad) {
+  const t = $('toast'); t.textContent = msg; t.className = 'show' + (bad ? ' bad' : '');
+  clearTimeout(toast.tm); toast.tm = setTimeout(() => t.className = '', bad ? 6000 : 2600);
+}
+
+const App = {
+  files: new Map(),      // upper-case file name -> { file?: File, handle?: FileSystemFileHandle }
+  dir: null,             // FileSystemDirectoryHandle when opened with write access
+  key: '',               // '1A' ...
+  L: null,               // Level
+  items: [],             // item definitions of the current level
+  gfx: { tiles: [], pal: null, obj: [], enemy: [], base: null },
+  paths: [],             // flight paths from PGOD0n.PAT
+  view: { zoom: 1, ox: 0, oy: 0 },
+  show: { solid: false, trig: true, obj: true, mon: true, mech: true, puz: true, grid: false, links: true },
+  mode: 'pick',
+  tab: 'sel',
+  sel: null,             // {kind:'obj',i} | {kind:'trig',n} | {kind:'rec',table,i} | {kind:'cell',x,y}
+  brush: { w: 1, h: 1, t: [1] }, tileTool: 'brush',
+  palZoom: 1,            // tile palette magnification
+  solidVal: 1, trigNum: 1, objType: 0,
+  undo: [], redo: [], dirty: false,
+  hover: null, backFrom: null,
+};
+
+/* ---------------------------------------------------------------- files */
+async function openFolder() {
+  if (App.dirty && !confirm('Discard unsaved changes to level ' + App.key + '?')) return;
+  if (window.showDirectoryPicker) {
+    let dir;
+    try { dir = await window.showDirectoryPicker({ mode: 'readwrite' }); }
+    catch (e) { if (e.name === 'AbortError') return; dir = null; }
+    if (dir) {
+      const files = new Map();
+      for await (const [name, handle] of dir.entries()) if (handle.kind === 'file') files.set(name.toUpperCase(), { handle });
+      App.dir = dir; return useFiles(files);
+    }
+  }
+  $('fDir').click();
+}
+$('fDir').addEventListener('change', e => {
+  const files = new Map();
+  for (const f of e.target.files) {
+    const depth = (f.webkitRelativePath || f.name).split('/').length;
+    if (depth <= 2) files.set(f.name.toUpperCase(), { file: f });
+  }
+  App.dir = null; useFiles(files); e.target.value = '';
+});
+async function readFile(name) {
+  const f = App.files.get(name);
+  if (!f) return null;
+  const file = f.handle ? await f.handle.getFile() : f.file;
+  return new Uint8Array(await file.arrayBuffer());
+}
+async function useFiles(files) {
+  const keys = [];
+  for (const n of [1, 2, 3, 4]) for (const l of ['A', 'B'])
+    if (files.has(`PLEV${n}${l}.MAP`) && files.has(`PALFILS.0${l}${n}`) && files.has(`PBITS${n}${l}.PI1`)) keys.push(n + l);
+  if (!keys.length) { toast('No Gods levels in that folder. Pick the folder that contains PLEV1A.MAP, PALFILS.0A1 and PBITS1A.PI1.', true); return; }
+  App.files = files;
+  const sel = $('levelSel'); sel.innerHTML = ''; sel.hidden = false;
+  for (const k of keys) sel.append(h('option', { value: k, text: `Level ${k[0]}${k[1]} – ${LEVELS[k[0]].name}, map ${k[1]}` }));
+  await loadLevel(keys.includes(App.key) ? App.key : keys[0]);
+}
+$('levelSel').addEventListener('change', async e => {
+  if (App.dirty && !confirm('Discard unsaved changes to level ' + App.key + '?')) { e.target.value = App.key; return; }
+  await loadLevel(e.target.value);
+});
+const mapName = k => `PLEV${k}.MAP`, alfName = k => `PALFILS.0${k[1]}${k[0]}`;
+
+async function loadLevel(key) {
+  try {
+    const n = +key[0], l = key[1];
+    const map = Codec.explode(await readFile(mapName(key)));
+    const alf = Codec.explode(await readFile(alfName(key)));
+    const L = new Level(map, alf, n, l);
+    await loadGraphics(L, key);
+    App.L = L; App.key = key; $('levelSel').value = key;
+    App.undo = []; App.redo = []; App.dirty = false; App.sel = null; App.backFrom = null;
+    App.trigNum = 1; App.objType = 0;
+    App.brush = { w: 1, h: 1, t: [1] };
+    buildBase();
+    $('work').hidden = false; $('welcome').hidden = true;
+    for (const b of ['bSave', 'bMore', 'bView']) $(b).disabled = false;
+    resizeCanvas();
+    const z = App.view.zoom = 1;
+    App.view.ox = L.info.start[0] - $('cv').width / z / 2; App.view.oy = L.info.start[1] - $('cv').height / z / 2;
+    clampView();
+    setMode(App.mode); setTab('sel'); refreshAll();
+    toast(`Level ${key} loaded`);
+  } catch (err) { console.error(err); toast('Could not open the level: ' + err.message, true); }
+}
+
+/* ------------------------------------------------------------- graphics */
+function sheetCanvas(pic, pal, rect, transparent) {
+  const { x, y, w, h: hh } = rect;
+  const c = document.createElement('canvas'); c.width = w; c.height = hh;
+  if (x + w > 320 || y + hh > 200 || w <= 0 || hh <= 0) return c;
+  const g = c.getContext('2d'), im = g.createImageData(w, hh);
+  for (let yy = 0; yy < hh; yy++) for (let xx = 0; xx < w; xx++) {
+    const v = pic.idx[(y + yy) * 320 + x + xx], p = pal[v], q = (yy * w + xx) * 4;
+    im.data[q] = p[0]; im.data[q + 1] = p[1]; im.data[q + 2] = p[2]; im.data[q + 3] = transparent && v === 0 ? 0 : 255;
+  }
+  g.putImageData(im, 0, 0);
+  return c;
+}
+async function loadSprites(dat, pi1, pal) {
+  const d = await readFile(dat), p = await readFile(pi1);
+  if (!d || !p) return [];
+  const rects = Codec.decodeDAT(d), pic = Codec.decodePI1(p);
+  return rects.map(r => sheetCanvas(pic, pal || pic.pal, r, true));
+}
+async function loadGraphics(L, key) {
+  const n = key[0];
+  const bits = Codec.decodePI1(await readFile(`PBITS${key}.PI1`));
+  const pal = bits.pal, tiles = [];
+  const xraw = await readFile(`PXTRA${key}.PI1`);
+  const xtra = xraw ? Codec.decodePI1(xraw) : null;
+  for (let i = 0; i < L.tileCount; i++) {
+    const src = i < 120 ? bits : xtra, k = i < 120 ? i : i - 120;
+    tiles.push(src ? sheetCanvas(src, pal, { x: (k % 10) * TW, y: ((k / 10) | 0) * TH, w: TW, h: TH }, false) : null);
+  }
+  App.gfx.pal = pal; App.gfx.tiles = tiles;
+  App.gfx.obj = await loadSprites('POBJ1.DAT', 'POBJ1.PI1', pal);
+  App.gfx.enemy = [...await loadSprites(`PLEVEL${n}A.DAT`, `PLEVEL${n}A.PI1`, pal), ...await loadSprites(`PLEVEL${n}B.DAT`, `PLEVEL${n}B.PI1`, pal)];
+  /* item definitions: 48-byte records {sprite, ?, category, value, name[16], description[24]} */
+  App.items = [];
+  const ob = await readFile(`POBJECTS.00${n}`);
+  if (ob) {
+    const d = Codec.explode(ob), str = (o, m) => { let s = ''; for (let k = 0; k < m && d[o + k]; k++) s += String.fromCharCode(d[o + k]); return s.trim(); };
+    for (let i = 0; i * 48 + 48 <= d.length; i++) {
+      const cat = (d[i * 48 + 4] << 8) | d[i * 48 + 5];
+      App.items.push({ id: i, cat, value: (d[i * 48 + 6] << 8) | d[i * 48 + 7], name: str(i * 48 + 8, 16), desc: str(i * 48 + 24, 24) });
+    }
+  }
+  /* flight paths: 8-byte directory entries {flags, ?, ?, length}, data from 0x190 */
+  App.paths = [];
+  const pat = await readFile(`PGOD0${n}.PAT`);
+  if (pat) {
+    const d = Codec.explode(pat), s16 = o => { const v = (d[o] << 8) | d[o + 1]; return v & 0x8000 ? v - 65536 : v; };
+    let off = 0x190;
+    for (let i = 0; i < 50; i++) {
+      if (s16(i * 8) < 0) break;
+      const len = (d[i * 8 + 6] << 8) | d[i * 8 + 7]; let p = off; const end = off + len; off = end;
+      const abs = d[p] === 0x23 && d[p + 1] === 0x45; if (abs) p += 2;
+      const path = { abs, x: s16(p), y: s16(p + 2), steps: [] }; p += 4;
+      const nib = v => (v & 8 ? v - 16 : v);
+      for (; p < end; p++) path.steps.push([nib(d[p] >> 4), nib(d[p] & 15)]);
+      App.paths.push(path);
+    }
+  }
+}
+
+/* names */
+function itemName(t) {
+  if (t >= 192) return 'weapon: ' + (WEAPONS[t - 192] || '#' + (t - 192));
+  const it = App.items[t];
+  if (!it) return 'item ' + t;
+  if (it.name) return it.name + (it.desc && sameNameCount(it.name) > 1 ? ' (' + it.desc + ')' : '');
+  return (ITEM_CATEGORY[it.cat] || 'item') + ' ' + t;
+}
+function sameNameCount(name) { let c = 0; for (const it of App.items) if (it.name === name) c++; return c; }
+const itemCat = t => t >= 192 ? 6 : (App.items[t] ? App.items[t].cat : -1);
+function objSprite(t) { return t >= 192 ? App.gfx.obj[132 + (t - 192)] : App.gfx.obj[t]; }
+function enemySprite(kind, id) {
+  const lst = kind === 'F' ? App.L.info.fly : App.L.info.ground, e = lst[id];
+  return e ? App.gfx.enemy[e[0]] : null;
+}
+function dropName(v, none) {
+  if (v === none || v === 0x3D) return 'nothing';
+  if (v < 11) return 'weapon: ' + WEAPONS[v];
+  return itemName(v - 11);
+}
+
+/* pre-rendered tile layer */
+function buildBase() {
+  const c = document.createElement('canvas'); c.width = W * TW; c.height = H * TH;
+  App.gfx.base = c;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) paintBaseTile(x, y);
+}
+function drawTileTo(g, v, x, y) {
+  if (v === 0) { g.fillStyle = '#0d1016'; g.fillRect(x, y, TW, TH); g.fillStyle = '#12161e'; g.fillRect(x, y, TW / 2, TH / 2); g.fillRect(x + TW / 2, y + TH / 2, TW / 2, TH / 2); return; }
+  const t = App.gfx.tiles[v - 1];
+  if (t) { g.drawImage(t, x, y); return; }
+  g.fillStyle = '#000'; g.fillRect(x, y, TW, TH);
+  g.fillStyle = '#5a2a5a'; g.fillRect(x, y, 5, 5);     // tile number beyond the tile set: black in game
+}
+function paintBaseTile(x, y) { drawTileTo(App.gfx.base.getContext('2d'), App.L.tile(x, y), x * TW, y * TH); }
+
+/* ----------------------------------------------------------- undo / save */
+function beginEdit() {
+  App.undo.push(App.L.snapshot()); if (App.undo.length > 200) App.undo.shift();
+  App.redo = []; setDirty(true);
+}
+function setDirty(d) {
+  App.dirty = d; $('dirty').textContent = d ? 'unsaved changes' : '';
+  $('bUndo').disabled = !App.undo.length; $('bRedo').disabled = !App.redo.length;
+}
+function doUndo(from, to) {
+  if (!from.length) return;
+  to.push(App.L.snapshot()); App.L.restore(from.pop());
+  buildBase(); setDirty(true); checkSel(); refreshAll();
+}
+$('bUndo').onclick = () => doUndo(App.undo, App.redo);
+$('bRedo').onclick = () => doUndo(App.redo, App.undo);
+function checkSel() {
+  const s = App.sel;
+  if (s && s.kind === 'obj' && App.L.obj(s.i).t < 0) App.sel = null;
+}
+
+async function writeToDir(name, bytes) {
+  const fh = await App.dir.getFileHandle(name, { create: true });
+  const w = await fh.createWritable(); await w.write(bytes); await w.close();
+  App.files.set(name.toUpperCase(), { handle: fh });
+}
+async function backupOnce(name) {
+  const bdir = await App.dir.getDirectoryHandle('EDITOR_BACKUP', { create: true });
+  try { await bdir.getFileHandle(name); return; } catch (e) { /* not there yet */ }
+  const orig = await readFile(name); if (!orig) return;
+  const fh = await bdir.getFileHandle(name, { create: true });
+  const w = await fh.createWritable(); await w.write(orig); await w.close();
+}
+function download(name, bytes) {
+  const a = h('a', { href: URL.createObjectURL(new Blob([bytes])), download: name });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function saveLevel(forceDownload) {
+  if (!App.L) return;
+  const mn = mapName(App.key), an = alfName(App.key);
+  const mb = Codec.implode(App.L.map), ab = Codec.implode(App.L.alf);
+  try {
+    if (App.dir && !forceDownload) {
+      await backupOnce(mn); await backupOnce(an);
+      await writeToDir(mn, mb); await writeToDir(an, ab);
+      toast(`Saved ${mn} and ${an}`);
+    } else {
+      download(mn, mb); download(an, ab);
+      toast(`Downloaded ${mn} and ${an} – copy them into the game folder`);
+    }
+    setDirty(false);
+  } catch (err) { console.error(err); toast('Saving failed: ' + err.message, true); }
+}
+$('bSave').onclick = () => saveLevel(false);
+$('bDownload').onclick = () => { $('morePop').hidden = true; saveLevel(true); };
+$('bRevert').onclick = async () => { $('morePop').hidden = true; if (!App.dirty || confirm('Discard unsaved changes?')) await loadLevel(App.key); };
+$('bPng').onclick = () => {
+  $('morePop').hidden = true;
+  const c = document.createElement('canvas'); c.width = W * TW; c.height = H * TH;
+  const g = c.getContext('2d'); g.drawImage(App.gfx.base, 0, 0);
+  for (const o of App.L.objects()) { const s = objSprite(o.t); if (s) g.drawImage(s, o.x, o.y); }
+  c.toBlob(b => { const a = h('a', { href: URL.createObjectURL(b), download: `gods_level_${App.key}.png` }); a.click(); });
+};
+$('bOpen').onclick = openFolder; $('bOpen2').onclick = openFolder;
+for (const [btn, pop] of [['bMore', 'morePop'], ['bView', 'viewPop']]) $(btn).onclick = e => { e.stopPropagation(); const p = $(pop); const was = p.hidden; $('morePop').hidden = $('viewPop').hidden = true; p.hidden = !was; };
+document.addEventListener('click', e => { if (!e.target.closest('.pop')) { $('morePop').hidden = true; $('viewPop').hidden = true; } });
+window.addEventListener('beforeunload', e => { if (App.dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ============================================================================
+   Meaning: plain-language descriptions, cross references, links, checks
+   ========================================================================== */
+const quote = s => '“' + s + '”';
+function argText(kind, p, unit) {
+  switch (kind) {
+    case 'item': return itemName(p);
+    case 'weapon': return WEAPONS[p] || 'weapon ' + p;
+    case 'trigger': return 'trigger ' + p;
+    case 'switch': return 'switch ' + p;
+    case 'cell': return `cell ${p >> 8}, ${p & 255}`;
+    case 'exit': return p >= 2 && p <= 5 ? ['level one', 'level two', 'level three', 'the game'][p - 2] : 'nothing (' + p + ')';
+    case 'num': return p + (unit ? ' ' + unit : '');
+  }
+  return '';
+}
+function condText(c, p) {
+  const d = CONDITIONS[c];
+  if (!d) return `unknown condition ${c} (${p})`;
+  if (!d.arg) return d.name.toLowerCase();
+  const a = argText(d.arg, p, d.unit);
+  switch (c) {
+    case 1: return 'player carries ' + a; case 2: return 'player does not carry ' + a;
+    case 3: return 'player has the ' + a; case 4: return 'player does not have the ' + a;
+    case 5: return a + ' has fired'; case 6: return a + ' has not fired';
+    case 11: return a + ' is on'; case 12: return a + ' is off';
+  }
+  return d.name.toLowerCase() + ' ' + a;
+}
+function actionText(a, p, x, y) {
+  const d = ACTIONS[a]; if (!d) return `unknown action ${a}`;
+  const at = d.pos ? ` at ${x}, ${y}` : '';
+  switch (a) {
+    case 0: return 'make ' + itemName(p) + ' appear' + at;
+    case 1: return 'make the ' + (WEAPONS[p] || 'weapon ' + p) + ' appear' + at;
+    case 3: return `open a passage door${at} leading to cell ${p >> 8}, ${p & 255}`;
+    case 4: return `open the exit door${at} that ends ${argText('exit', p)}`;
+    case 5: return 'fire trigger ' + p;
+    case 10: return 'take away the ' + (WEAPONS[p] || 'weapon ' + p);
+    case 11: case 12: case 13: return 'show the message only';
+  }
+  return d.name.toLowerCase().replace(' (tiles)', '') + at;
+}
+function puzzleParts(i) {
+  const L = App.L, g = k => L.get('puzzle', i, k), conds = [];
+  for (const k of [1, 2, 3]) { const c = g('c' + k); if (c) conds.push(condText(c, g('p' + k))); }
+  const txt = L.texts()[g('text')] || '';
+  return { conds, action: actionText(g('action'), g('param'), g('x'), g('y')), text: txt, consume: g('consume') };
+}
+function puzzleSummary(i) {
+  if (App.L.isEmpty('puzzle', i)) return 'empty';
+  const p = puzzleParts(i);
+  return (p.conds.length ? 'if ' + p.conds.join(' and ') + ': ' : '') + p.action + (p.text ? ' ' + quote(p.text) : '');
+}
+function recSummary(tn, i) {
+  const L = App.L, g = k => L.get(tn, i, k);
+  if (tn === 'trigger') return triggerSummary(i + 1);
+  if (tn === 'puzzle') return puzzleSummary(i);
+  if (L.isEmpty(tn, i)) return 'empty';
+  switch (tn) {
+    case 'wave': return `${g('count')} × flying monster ${g('enemy')} on path ${g('path')}, ${g('hp')} hp` + (g('drop') !== 255 ? ', leaves ' + dropName(g('drop'), 255) : '');
+    case 'ground': return `${g('count')} × monster ${g('enemy')} at ${g('x')}, ${g('y')}, ${g('hp')} hp` + (g('drop') !== 255 ? ', leaves ' + dropName(g('drop'), 255) : '');
+    case 'walker': case 'flyer': return `${g('count')} × monster ${g('enemy')} at cell ${g('cx')}, ${g('cy')}, ${g('hp')} hp` + (g('reward') !== 0xFFFF ? ', leaves ' + dropName(g('reward'), 0xFFFF) : '');
+    case 'switch': return `${itemName(g('state'))} at ${g('x')}, ${g('y')}`;
+    case 'teleport': return `stone at x ${g('src')} → ${g('x')}, ${g('y')}`;
+    case 'trapdoor': return `at ${g('x')}, ${g('y')}, starts ${g('open') ? 'open' : 'closed'}`;
+    case 'block': return `${g('wide') + 1}×${g('tall') + 1} cells at ${g('x')}, ${g('y')}`;
+  }
+  return '';
+}
+function triggerSummary(n) {
+  const t = App.L.trig(n), d = TRIGGER_TYPES[t.type];
+  if (!d) return `unknown type ${t.type} (${t.param})`;
+  if (t.type === 0) return 'unused';
+  if (!d.table) return d.name;
+  const max = TABLES[d.table].count;
+  if (t.param >= max) return `${d.name} ${t.param} (out of range)`;
+  if (t.type === 3) return `Puzzle ${t.param}: ` + puzzleSummary(t.param);
+  if (t.type >= 7 && t.type <= 10) return `Block ${t.param}: ${blockCmdName(App.L.get('block', t.param, 'cmd' + (t.type - 6)))}`;
+  return `${d.name} ${t.param}: ` + recSummary(d.table, t.param);
+}
+const blockCmdName = v => (BLOCK_CMDS.find(c => c[0] === v) || [0, 'command ' + v])[1].toLowerCase();
+
+/* ---- cross references ---- */
+function triggersUsing(tn, i) {
+  const out = [];
+  for (let n = 1; n <= 253; n++) {
+    const t = App.L.trig(n), d = TRIGGER_TYPES[t.type];
+    if (d && d.table === tn && t.param === i) out.push(n);
+  }
+  return out;
+}
+function puzzlesWhere(fn) { const out = []; for (let i = 0; i < 100; i++) if (!App.L.isEmpty('puzzle', i) && fn(k => App.L.get('puzzle', i, k))) out.push(i); return out; }
+const puzzlesFiring = n => puzzlesWhere(g => g('action') === 5 && g('param') === n);
+const puzzlesTestingTrigger = n => puzzlesWhere(g => [1, 2, 3].some(k => (g('c' + k) === 5 || g('c' + k) === 6) && g('p' + k) === n));
+const puzzlesTestingSwitch = s => puzzlesWhere(g => [1, 2, 3].some(k => (g('c' + k) === 11 || g('c' + k) === 12) && g('p' + k) === s));
+const puzzlesTestingItem = t => puzzlesWhere(g => [1, 2].some(c => [1, 2, 3].some(k => g('c' + k) === c && g('p' + k) === t)));
+
+/* ---- objects and the tables that mirror them ---- */
+function switchAt(x, y) { for (let i = 0; i < 64; i++) if (App.L.get('switch', i, 'x') === x && App.L.get('switch', i, 'y') === y) return i; return -1; }
+function teleportOf(x) { for (let i = 0; i < 30; i++) if (!App.L.isEmpty('teleport', i) && App.L.get('teleport', i, 'src') === x) return i; return -1; }
+function hintOf(x) { for (let i = 0; i < NHINT; i++) if (App.L.hint(i).x === x) return i; return -1; }
+const isSwitch = t => itemCat(t) === 3;
+const isStone = t => t < 192 && App.items[t] && App.items[t].name === 'teleport stone';
+const isTablet = t => t < 192 && App.items[t] && App.items[t].name === 'tablet';
+/** Moves / retypes / deletes an object and keeps switch, teleport and hint tables in step. t < 0 deletes. */
+function changeObject(i, x, y, t) {
+  const L = App.L, o = L.obj(i);
+  if (o.t >= 0) {
+    if (isSwitch(o.t)) {
+      const s = switchAt(o.x, o.y);
+      if (s >= 0) { if (t >= 0 && isSwitch(t)) { L.set('switch', s, 'x', x); L.set('switch', s, 'y', y); L.set('switch', s, 'state', t); } else L.clearRec('switch', s); }
+      else if (t >= 0 && isSwitch(t)) addSwitch(x, y, t);
+    } else if (t >= 0 && isSwitch(t)) addSwitch(x, y, t);
+    if (isStone(o.t) && t >= 0 && isStone(t) && x !== o.x) { const k = teleportOf(o.x); if (k >= 0) L.set('teleport', k, 'src', x); }
+    if (isTablet(o.t) && t >= 0 && isTablet(t) && x !== o.x) { const k = hintOf(o.x); if (k >= 0) L.setHint(k, x, L.hint(k).text); }
+  } else if (t >= 0 && isSwitch(t)) addSwitch(x, y, t);
+  if (t < 0) L.setObj(i, 0xFFFF, 0xFFFF, 0xFFFF); else L.setObj(i, x, y, t);
+}
+function addSwitch(x, y, t) {
+  const L = App.L; if (switchAt(x, y) >= 0) return true;
+  /* prefer a slot that no puzzle already refers to, so old references do not latch onto the new switch */
+  let s = -1;
+  for (let i = 0; i < 64 && s < 0; i++) if (L.isEmpty('switch', i) && !puzzlesTestingSwitch(i).length) s = i;
+  if (s < 0) s = L.firstFree('switch');
+  if (s < 0) return false;
+  L.set('switch', s, 'x', x); L.set('switch', s, 'y', y); L.set('switch', s, 'state', t); return true;
+}
+
+/* ---- things with a position on the map ---- */
+function doorCell(x, y) { return [x & ~31, (y + 8) & ~15]; }
+function entities() {
+  const L = App.L, out = [], S = App.show;
+  const add = (table, i, x, y, w, hh, color, tag, extra) => out.push(Object.assign({ kind: 'rec', table, i, x, y, w, h: hh, color, tag }, extra));
+  if (S.mon) {
+    for (let i = 0; i < 100; i++) if (!L.isEmpty('ground', i)) { const e = L.info.ground[L.get('ground', i, 'enemy')] || [0, 32, 32]; add('ground', i, L.get('ground', i, 'x'), L.get('ground', i, 'y'), e[1], e[2], '#d8553f', 'G' + i, { sprite: enemySprite('G', L.get('ground', i, 'enemy')) }); }
+    for (let i = 0; i < 50; i++) if (!L.isEmpty('walker', i)) add('walker', i, L.get('walker', i, 'cx') * TW, L.get('walker', i, 'cy') * TH, 32, 32, '#e07a5f', 'W' + i, { sprite: enemySprite('G', L.get('walker', i, 'enemy')) });
+    for (let i = 0; i < 50; i++) if (!L.isEmpty('flyer', i)) add('flyer', i, L.get('flyer', i, 'cx') * TW, L.get('flyer', i, 'cy') * TH, 32, 32, '#e6a15a', 'F' + i, { sprite: enemySprite('F', L.get('flyer', i, 'enemy')) });
+  }
+  if (S.mech) {
+    for (let i = 0; i < 20; i++) if (!L.isEmpty('trapdoor', i)) add('trapdoor', i, L.get('trapdoor', i, 'x'), L.get('trapdoor', i, 'y'), 32, 16, '#55b39a', 'trap ' + i);
+    for (let i = 0; i < 25; i++) if (!L.isEmpty('block', i) && triggersUsing('block', i).length) add('block', i, L.get('block', i, 'x'), L.get('block', i, 'y'), (L.get('block', i, 'wide') + 1) * 32, (L.get('block', i, 'tall') + 1) * 16, '#b58ae6', 'block ' + i);
+    for (let i = 0; i < 30; i++) if (!L.isEmpty('teleport', i)) add('teleport', i, L.get('teleport', i, 'x'), L.get('teleport', i, 'y'), 32, 48, '#6aa7e8', 'tele ' + i);
+  }
+  if (S.puz) for (let i = 0; i < 100; i++) {
+    if (L.isEmpty('puzzle', i)) continue;
+    const a = L.get('puzzle', i, 'action'), d = ACTIONS[a]; if (!d || !d.pos) continue;
+    const x = L.get('puzzle', i, 'x'), y = L.get('puzzle', i, 'y'); if (!x && !y) continue;
+    if (a === 2 || a === 9) { const [cx, cy] = doorCell(x, y); add('puzzle', i, cx, cy, 64, 48, '#d9933f', 'P' + i, { ax: x, ay: y }); }
+    else if (a === 3 || a === 4) { const [cx, cy] = doorCell(x, y); add('puzzle', i, cx - 16, cy, 32, 48, '#d9933f', 'P' + i, { ax: x, ay: y }); }
+    else if (a === 7 || a === 8) add('puzzle', i, x, y, 32, 16, '#d9933f', 'P' + i, { ax: x, ay: y });
+    else add('puzzle', i, x, y, 16, 16, '#d9933f', 'P' + i, { ax: x, ay: y });
+  }
+  return out;
+}
+/** where a record sits on the map, or null */
+function recPos(tn, i) {
+  const L = App.L, g = k => L.get(tn, i, k);
+  switch (tn) {
+    case 'ground': case 'trapdoor': case 'block': case 'switch': return [g('x'), g('y')];
+    case 'teleport': return [g('x'), g('y')];
+    case 'walker': case 'flyer': return [g('cx') * TW, g('cy') * TH];
+    case 'puzzle': { const d = ACTIONS[g('action')]; return d && d.pos && (g('x') || g('y')) ? [g('x'), g('y')] : null; }
+    case 'wave': { const p = App.paths[g('path')]; return p && p.abs ? [p.x, p.y] : null; }
+    case 'trigger': { const c = L.cellsOfTrigger(i + 1); return c.length ? [c[0][0] * TW + 16, c[0][1] * TH + 8] : null; }
+  }
+  return null;
+}
+
+/* ---- arrows shown for the selection ---- */
+function triggerTargets(n, depth, seen, out) {
+  if (depth > 5 || seen.has(n) || n < 1 || n > 253) return out;
+  seen.add(n);
+  const L = App.L, t = L.trig(n), d = TRIGGER_TYPES[t.type];
+  if (!d || !d.table || t.param >= TABLES[d.table].count) return out;
+  if (t.type === 3) puzzleTargets(t.param, depth, seen, out);
+  else { const p = recPos(d.table, t.param); if (p) out.push({ p, color: d.table === 'block' ? '#b58ae6' : '#d8553f', label: TABLES[d.table].one + ' ' + t.param }); }
+  return out;
+}
+function puzzleTargets(i, depth, seen, out) {
+  const L = App.L, g = k => L.get('puzzle', i, k), a = g('action'), d = ACTIONS[a];
+  if (d && d.pos && (g('x') || g('y'))) {
+    out.push({ p: [g('x'), g('y')], color: '#f3bf6c', label: 'P' + i + ' ' + d.name.toLowerCase() });
+    if (a === 3) out.push({ p: [(g('param') >> 8) * TW + 16, (g('param') & 255) * TH], from: [g('x'), g('y')], color: '#6aa7e8', label: 'leads here' });
+  }
+  if (a === 5) triggerTargets(g('param'), depth + 1, seen, out);
+  for (const k of [1, 2, 3]) {
+    const c = g('c' + k), p = g('p' + k);
+    if ((c === 11 || c === 12) && p < 64 && !L.isEmpty('switch', p)) out.push({ p: [L.get('switch', p, 'x') + 8, L.get('switch', p, 'y') + 8], color: '#55b39a', dash: true, label: 'needs switch ' + p + (c === 11 ? ' on' : ' off') });
+  }
+  return out;
+}
+function selectionLinks() {
+  const s = App.sel, L = App.L, lines = [];
+  if (!s || !App.show.links) return lines;
+  const fan = (origins, targets) => {
+    for (const t of targets) {
+      if (t.from) { lines.push({ a: t.from, b: t.p, color: t.color, dash: t.dash, label: t.label }); continue; }
+      if (!origins.length) lines.push({ a: null, b: t.p, color: t.color, dash: t.dash, label: t.label });
+      for (const o of origins) lines.push({ a: o, b: t.p, color: t.color, dash: t.dash, label: t.label });
+    }
+  };
+  const cellsOf = n => L.cellsOfTrigger(n).map(c => [c[0] * TW + 16, c[1] * TH + 8]);
+  if (s.kind === 'trig') fan(cellsOf(s.n).slice(0, 12), triggerTargets(s.n, 0, new Set(), []));
+  else if (s.kind === 'rec' && s.table === 'puzzle') {
+    const targets = puzzleTargets(s.i, 0, new Set(), []);
+    let origins = []; for (const n of triggersUsing('puzzle', s.i)) origins = origins.concat(cellsOf(n));
+    fan(origins.slice(0, 12), targets);
+  } else if (s.kind === 'rec' && s.table === 'teleport') {
+    for (const o of L.objects()) if (isStone(o.t) && o.x === L.get('teleport', s.i, 'src')) lines.push({ a: [o.x + 8, o.y + 8], b: recPos('teleport', s.i), color: '#6aa7e8', label: 'teleports here' });
+  } else if (s.kind === 'rec' && s.table === 'block') {
+    const g = k => L.get('block', s.i, k); let prev = [g('x'), g('y')];
+    for (let k = 1; k <= 4; k++) if (g('x' + k) || g('y' + k)) { const p = [g('x' + k), g('y' + k)]; lines.push({ a: prev, b: p, color: '#b58ae6', label: 'waypoint ' + k }); prev = p; }
+    for (const n of triggersUsing('block', s.i)) for (const c of cellsOf(n)) lines.push({ a: c, b: [g('x'), g('y')], color: '#b58ae6', dash: true });
+  } else if (s.kind === 'rec' && TABLES[s.table]) {
+    const p = recPos(s.table, s.i);
+    if (p) for (const n of triggersUsing(s.table, s.i)) for (const c of cellsOf(n)) lines.push({ a: c, b: p, color: '#d8553f' });
+  } else if (s.kind === 'obj') {
+    const o = L.obj(s.i);
+    if (isSwitch(o.t)) { const sw = switchAt(o.x, o.y); if (sw >= 0) for (const i of puzzlesTestingSwitch(sw)) fan([[o.x + 8, o.y + 8]], puzzleTargets(i, 0, new Set(), []).filter(t => !t.dash)); }
+    if (isStone(o.t)) { const k = teleportOf(o.x); if (k >= 0) lines.push({ a: [o.x + 8, o.y + 8], b: recPos('teleport', k), color: '#6aa7e8', label: 'teleports here' }); }
+  }
+  return lines;
+}
+
+/* ---- consistency checks ---- */
+function runChecks() {
+  const L = App.L, out = [], add = (sev, msg, sel, pos) => out.push({ sev, msg, sel, pos });
+  const used = new Map();
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const v = L.coll(x, y); if (v > 2) { if (!used.has(v - 2)) used.set(v - 2, [x, y]); } }
+  for (const [n, c] of used) {
+    const t = L.trig(n);
+    if (n <= 253 && t.type === 0) add('warn', `Trigger cells numbered ${n} do nothing: trigger ${n} has no type.`, { kind: 'trig', n }, c);
+  }
+  for (let n = 1; n <= 253; n++) {
+    const t = L.trig(n), d = TRIGGER_TYPES[t.type];
+    if (!d) { add('err', `Trigger ${n} has unknown type ${t.type}; the game would crash on it.`, { kind: 'trig', n }); continue; }
+    if (d.table) {
+      if (t.param >= TABLES[d.table].count) add('err', `Trigger ${n} points at ${d.name.toLowerCase()} ${t.param}, which does not exist.`, { kind: 'trig', n });
+      else if (L.isEmpty(d.table, t.param) && d.table !== 'puzzle') add('warn', `Trigger ${n} points at empty ${TABLES[d.table].one.toLowerCase()} ${t.param}.`, { kind: 'trig', n });
+    }
+    if (t.type && t.type !== 6 && t.type !== 11 && !used.has(n) && !puzzlesFiring(n).length && !puzzlesTestingTrigger(n).length && n < 252)
+      add('info', `Trigger ${n} (${d.name.toLowerCase()}) is never reached: no cell carries its number and no puzzle fires it.`, { kind: 'trig', n });
+  }
+  if (L.trig(252).type !== 11 || L.trig(253).type !== 6) add('info', 'Triggers 252 and 253 are reset by the game to “start the guardian” and “checkpoint” when a new game starts.', { kind: 'trig', n: 252 });
+  for (let i = 0; i < 100; i++) {
+    if (L.isEmpty('puzzle', i)) continue;
+    const g = k => L.get('puzzle', i, k), sel = { kind: 'rec', table: 'puzzle', i }, a = g('action');
+    if (!ACTIONS[a]) add('err', `Puzzle ${i} uses unknown action ${a}; the game would crash on it.`, sel);
+    for (const k of [1, 2, 3]) {
+      const c = g('c' + k), p = g('p' + k);
+      if (!CONDITIONS[c]) { add('err', `Puzzle ${i} uses unknown condition ${c}; the game would crash on it.`, sel); continue; }
+      if (c === 14) add('warn', `Puzzle ${i} uses \u201cscore is under\u201d. A bug in the DOS game corrupts the puzzle when this condition is checked; in a test the game froze.`, sel);
+      if ((c === 11 || c === 12) && (p >= 64 || L.isEmpty('switch', p))) add('warn', `Puzzle ${i} tests switch ${p}, which is not in the switch table.`, sel);
+      if ((c === 5 || c === 6) && (p < 1 || p > 253)) add('err', `Puzzle ${i} tests trigger ${p}, which does not exist.`, sel);
+    }
+    if (a === 5 && (g('param') < 1 || g('param') > 253)) add('err', `Puzzle ${i} fires trigger ${g('param')}, which does not exist.`, sel);
+    if (a === 7 || a === 8) { let ok = false; for (let t = 0; t < 20; t++) if (L.get('trapdoor', t, 'x') === g('x') && L.get('trapdoor', t, 'y') === g('y')) ok = true; if (!ok) add('warn', `Puzzle ${i} moves a trapdoor at ${g('x')}, ${g('y')}, but no trapdoor has exactly that position.`, sel); }
+    if ((a === 0 && g('param') >= App.items.length) || (a === 1 && g('param') > 10)) add('warn', `Puzzle ${i} creates an item that does not exist (${g('param')}).`, sel);
+    if (g('text') >= NTEXT) add('err', `Puzzle ${i} uses message ${g('text')}; only 0–39 exist.`, sel);
+    if (!triggersUsing('puzzle', i).length) add('info', `Puzzle ${i} is not attached to any trigger.`, sel);
+  }
+  const objs = L.objects();
+  for (const o of objs) {
+    if (o.t < 192 && o.t >= App.items.length) add('err', `Object ${o.i} has unknown type ${o.t}.`, { kind: 'obj', i: o.i });
+    if (isSwitch(o.t) && switchAt(o.x, o.y) < 0) add('err', `${itemName(o.t)} at ${o.x}, ${o.y} has no entry in the switch table, so the game removes it.`, { kind: 'obj', i: o.i });
+    if (o.x < 0 || o.y < 0 || o.x >= W * TW || o.y >= H * TH) add('warn', `Object ${o.i} (${itemName(o.t)}) lies outside the map.`, { kind: 'obj', i: o.i });
+  }
+  for (let s = 0; s < 64; s++) if (!L.isEmpty('switch', s)) {
+    const x = L.get('switch', s, 'x'), y = L.get('switch', s, 'y');
+    if (!objs.some(o => o.x === x && o.y === y && isSwitch(o.t))) add('info', `Switch ${s} at ${x}, ${y} has no switch object on the map.`, { kind: 'rec', table: 'switch', i: s });
+  }
+  for (let t = 0; t < 20; t++) if (!L.isEmpty('trapdoor', t)) { const x = L.get('trapdoor', t, 'x'), y = L.get('trapdoor', t, 'y'); if (x % 32 || y % 16) add('warn', `Trapdoor ${t} is not aligned to the cell grid.`, { kind: 'rec', table: 'trapdoor', i: t }); }
+  const stones = objs.filter(o => isStone(o.t));
+  for (let k = 0; k < 30; k++) if (!L.isEmpty('teleport', k) && !stones.some(o => o.x === L.get('teleport', k, 'src'))) add('info', `Teleport ${k} waits for a stone at x ${L.get('teleport', k, 'src')}, but no teleport stone has that x.`, { kind: 'rec', table: 'teleport', i: k });
+  /* string pool shared by item names, hints and messages */
+  let pool = 0; for (const it of App.items) pool += it.name.length + it.desc.length + 2;
+  let txt = 0; for (const s of L.texts()) if (s) txt += s.length + 1;
+  for (let i = 0; i < NHINT; i++) { const hn = L.hint(i); if (hn.used && hn.text) txt += hn.text.length + 1; }
+  if (pool + txt > 2400) add('warn', `Messages and hints use ${txt} bytes; together with item names that is ${pool + txt} of roughly 2500 bytes of text memory.`, { kind: 'tab', tab: 'text' });
+  let big = 0, bigAt = null; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (L.tile(x, y) > L.tileCount) { big++; bigAt = bigAt || [x, y]; }
+  if (big) add('info', `${big} cells use tile numbers above ${L.tileCount}. This map loads only ${L.tileCount} tiles, so the game draws them black.`, null, bigAt);
+  if (objs.length >= NOBJ) add('info', 'All 200 object slots are in use.', null);
+  const order = { err: 0, warn: 1, info: 2 };
+  return out.sort((a, b) => order[a.sev] - order[b.sev]);
+}
+
+/* ============================================================================
+   Map canvas: drawing and mouse tools
+   ========================================================================== */
+const cv = $('cv'), ctx = cv.getContext('2d');
+const TRIG_COLORS = ['#7c8594', '#e6a15a', '#d8553f', '#f3bf6c', '#e07a5f', '#e6a15a', '#55b39a', '#b58ae6', '#b58ae6', '#b58ae6', '#b58ae6', '#ff5fa8'];
+let needDraw = false;
+function redraw() { if (!needDraw) { needDraw = true; requestAnimationFrame(() => { needDraw = false; draw(); }); } }
+function resizeCanvas() {
+  const r = cv.getBoundingClientRect();
+  cv.width = Math.max(100, Math.round(r.width)); cv.height = Math.max(100, Math.round(r.height));
+  clampView(); redraw();
+}
+window.addEventListener('resize', () => { if (App.L) resizeCanvas(); });
+function clampView() {
+  const v = App.view, vw = cv.width / v.zoom, vh = cv.height / v.zoom, m = 64;
+  v.ox = vw >= W * TW + 2 * m ? (W * TW - vw) / 2 : clamp(v.ox, -m, W * TW - vw + m);
+  v.oy = vh >= H * TH + 2 * m ? (H * TH - vh) / 2 : clamp(v.oy, -m, H * TH - vh + m);
+  $('zLbl').textContent = Math.round(v.zoom * 100) + '%';
+}
+function centerOn(x, y) { const v = App.view; v.ox = x - cv.width / v.zoom / 2; v.oy = y - cv.height / v.zoom / 2; clampView(); redraw(); }
+const ZOOMS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+function zoomBy(dir, px, py) {
+  const v = App.view, i = ZOOMS.reduce((b, z, k) => Math.abs(z - v.zoom) < Math.abs(ZOOMS[b] - v.zoom) ? k : b, 0);
+  const nz = ZOOMS[clamp(i + dir, 0, ZOOMS.length - 1)]; if (nz === v.zoom) return;
+  if (px == null) { px = cv.width / 2; py = cv.height / 2; }
+  const wx = v.ox + px / v.zoom, wy = v.oy + py / v.zoom;
+  v.zoom = nz; v.ox = wx - px / nz; v.oy = wy - py / nz; clampView(); redraw();
+}
+$('zIn').onclick = () => zoomBy(1); $('zOut').onclick = () => zoomBy(-1);
+
+function label(g, text, x, y, color, z, align) {
+  g.font = `600 ${11 / z}px Consolas,monospace`; g.textAlign = align || 'left'; g.textBaseline = 'top';
+  const w = g.measureText(text).width, pad = 2 / z, hh = 13 / z;
+  const x0 = align === 'center' ? x - w / 2 : x;
+  g.fillStyle = 'rgba(10,12,16,.82)'; g.fillRect(x0 - pad, y - pad, w + 2 * pad, hh);
+  g.fillStyle = color; g.fillText(text, x, y);
+}
+function arrow(g, a, b, color, dash, z) {
+  g.strokeStyle = color; g.fillStyle = color; g.lineWidth = 2 / z; g.setLineDash(dash ? [6 / z, 5 / z] : []);
+  g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); g.setLineDash([]);
+  const ang = Math.atan2(b[1] - a[1], b[0] - a[0]), s = 9 / z;
+  g.beginPath(); g.moveTo(b[0], b[1]); g.lineTo(b[0] - s * Math.cos(ang - 0.4), b[1] - s * Math.sin(ang - 0.4));
+  g.lineTo(b[0] - s * Math.cos(ang + 0.4), b[1] - s * Math.sin(ang + 0.4)); g.closePath(); g.fill();
+}
+function drawPath(g, path, ox, oy, color, z) {
+  let x = path.x + ox, y = path.y + oy;
+  g.strokeStyle = color; g.lineWidth = 1.5 / z; g.beginPath(); g.moveTo(x + 16, y + 16);
+  for (const [dx, dy] of path.steps) { x += dx; y += dy; g.lineTo(x + 16, y + 16); }
+  g.stroke();
+}
+
+function draw() {
+  const L = App.L; if (!L) return;
+  const g = ctx, v = App.view, z = v.zoom, S = App.show, sel = App.sel;
+  g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#0b0d10'; g.fillRect(0, 0, cv.width, cv.height);
+  g.imageSmoothingEnabled = false;
+  g.setTransform(z, 0, 0, z, -Math.round(v.ox * z), -Math.round(v.oy * z));
+  g.drawImage(App.gfx.base, 0, 0);
+  const x0 = clamp(Math.floor(v.ox / TW), 0, W - 1), x1 = clamp(Math.ceil((v.ox + cv.width / z) / TW), 0, W);
+  const y0 = clamp(Math.floor(v.oy / TH), 0, H - 1), y1 = clamp(Math.ceil((v.oy + cv.height / z) / TH), 0, H);
+  const showSolid = S.solid || App.mode === 'solid', showTrig = S.trig || App.mode === 'trig';
+
+  /* doors that the game builds from marker tiles */
+  if (S.mech) for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const t = L.tile(x, y);
+    if (t === L.info.doorOpen || t === L.info.doorClosed) {
+      g.strokeStyle = '#d9933f'; g.lineWidth = 1.5 / z; g.setLineDash([4 / z, 3 / z]); g.strokeRect(x * TW, y * TH, 64, 48); g.setLineDash([]);
+      if (z >= 0.75) label(g, 'door', x * TW + 2, y * TH + 2, '#f3bf6c', z);
+    }
+  }
+  /* collision layer */
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const c = L.coll(x, y); if (!c) continue;
+    if (c === 1) { if (showSolid) { g.fillStyle = 'rgba(216,85,63,.38)'; g.fillRect(x * TW, y * TH, TW, TH); } }
+    else if (c === 2) { if (showSolid) { g.fillStyle = 'rgba(106,167,232,.42)'; g.fillRect(x * TW, y * TH, TW, TH); } }
+    else if (showTrig) {
+      const n = c - 2, t = L.trig(Math.min(n, 253)), col = TRIG_COLORS[t.type] || '#ff0000';
+      const on = sel && sel.kind === 'trig' && sel.n === n;
+      g.fillStyle = col + (on ? 'aa' : '55'); g.fillRect(x * TW, y * TH, TW, TH);
+      g.strokeStyle = on ? '#fff' : col; g.lineWidth = (on ? 2 : 1) / z; g.strokeRect(x * TW + 0.5 / z, y * TH + 0.5 / z, TW - 1 / z, TH - 1 / z);
+      if (z >= 0.75) { g.font = `700 ${Math.min(11, 11 / z * Math.min(z, 1.4))}px Consolas,monospace`; g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillStyle = '#000'; g.fillText(n, x * TW + 16 + 0.7, y * TH + 8.7); g.fillStyle = '#fff'; g.fillText(n, x * TW + 16, y * TH + 8); }
+    }
+  }
+  if (S.grid) {
+    g.lineWidth = 1 / z; g.strokeStyle = 'rgba(255,255,255,.10)'; g.beginPath();
+    for (let x = x0; x <= x1; x++) { g.moveTo(x * TW, y0 * TH); g.lineTo(x * TW, y1 * TH); }
+    for (let y = y0; y <= y1; y++) { g.moveTo(x0 * TW, y * TH); g.lineTo(x1 * TW, y * TH); }
+    g.stroke();
+  }
+  g.strokeStyle = '#444d5c'; g.lineWidth = 2 / z; g.strokeRect(0, 0, W * TW, H * TH);
+
+  /* objects */
+  if (S.obj || App.mode === 'obj') for (const o of L.objects()) {
+    const sp = objSprite(o.t), w = sp ? sp.width : 16, hh = sp ? sp.height : 16;
+    if (sp) g.drawImage(sp, o.x, o.y); else { g.fillStyle = '#d8553f'; g.fillRect(o.x, o.y, 16, 16); }
+    const on = sel && sel.kind === 'obj' && sel.i === o.i;
+    if (on || App.mode === 'obj' || App.mode === 'pick') {
+      g.lineWidth = (on ? 2 : 1) / z; g.strokeStyle = on ? '#fff' : isSwitch(o.t) ? 'rgba(85,179,154,.9)' : 'rgba(255,255,255,.28)';
+      g.strokeRect(o.x - 1, o.y - 1, w + 2, hh + 2);
+    }
+  }
+  /* monsters, machines, puzzle targets */
+  for (const e of entities()) {
+    const on = sel && sel.kind === 'rec' && sel.table === e.table && sel.i === e.i;
+    if (e.sprite) { g.globalAlpha = on ? 1 : 0.8; g.drawImage(e.sprite, e.x, e.y); g.globalAlpha = 1; }
+    g.lineWidth = (on ? 2.5 : 1.5) / z; g.strokeStyle = on ? '#fff' : e.color;
+    if (e.table === 'puzzle' && e.w === 16) { g.beginPath(); g.moveTo(e.x - 6, e.y); g.lineTo(e.x + 6, e.y); g.moveTo(e.x, e.y - 6); g.lineTo(e.x, e.y + 6); g.stroke(); g.beginPath(); g.arc(e.x, e.y, 4, 0, 7); g.stroke(); }
+    else g.strokeRect(e.x, e.y, e.w, e.h);
+    if (z >= 0.75 || on) label(g, e.tag, e.x + 1, e.y - 14 / z, on ? '#fff' : e.color, z);
+  }
+  /* start of a new game */
+  if (L.letter === 'A') { const [sx, sy] = L.info.start; g.strokeStyle = '#55b39a'; g.lineWidth = 1.5 / z; g.setLineDash([3 / z, 3 / z]); g.strokeRect(sx, sy, 32, 48); g.setLineDash([]); if (z >= 0.5) label(g, 'start', sx, sy - 14 / z, '#55b39a', z); }
+
+  /* flight path of a selected wave (or the wave behind a selected trigger) */
+  let wave = -1, anchor = null;
+  if (sel && sel.kind === 'rec' && sel.table === 'wave') wave = sel.i;
+  if (sel && sel.kind === 'trig') { const t = L.trig(sel.n); if (t.type === 1 && t.param < 100) { wave = t.param; const c = L.cellsOfTrigger(sel.n)[0]; if (c) anchor = c; } }
+  if (wave >= 0) {
+    const p = App.paths[L.get('wave', wave, 'path')];
+    if (p && p.abs) drawPath(g, p, 0, 0, '#e6a15a', z);
+    else if (p && anchor) { g.setLineDash([5 / z, 4 / z]); drawPath(g, p, anchor[0] * TW - 144, anchor[1] * TH - 96, '#e6a15a', z); g.setLineDash([]); }
+  }
+  /* arrows for the selection */
+  for (const ln of selectionLinks()) {
+    if (ln.a) arrow(g, ln.a, ln.b, ln.color, ln.dash, z);
+    g.strokeStyle = ln.color; g.lineWidth = 2 / z; g.beginPath(); g.arc(ln.b[0], ln.b[1], 7 / z, 0, 7); g.stroke();
+    if (ln.label && z >= 0.5) label(g, ln.label, ln.b[0] + 10 / z, ln.b[1] + 4 / z, ln.color, z);
+  }
+  if (sel && sel.kind === 'trig') for (const c of L.cellsOfTrigger(sel.n)) { g.strokeStyle = '#fff'; g.lineWidth = 2 / z; g.strokeRect(c[0] * TW, c[1] * TH, TW, TH); }
+
+  /* tool preview */
+  const hv = App.hover;
+  if (hv && hv.in && !Drag.active) {
+    g.lineWidth = 1.5 / z; g.strokeStyle = '#fff';
+    if (App.mode === 'tiles') {
+      const b = App.brush; g.globalAlpha = 0.75;
+      for (let j = 0; j < b.h; j++) for (let i = 0; i < b.w; i++) if (hv.cx + i < W && hv.cy + j < H) drawTileTo(g, b.t[j * b.w + i], (hv.cx + i) * TW, (hv.cy + j) * TH);
+      g.globalAlpha = 1; g.strokeRect(hv.cx * TW, hv.cy * TH, b.w * TW, b.h * TH);
+    } else if (App.mode === 'solid' || App.mode === 'trig') g.strokeRect(hv.cx * TW, hv.cy * TH, TW, TH);
+    else if (App.mode === 'obj' && !hitObject(hv.x, hv.y)) { const sp = objSprite(App.objType); if (sp) { g.globalAlpha = 0.6; g.drawImage(sp, Math.round(hv.x - sp.width / 2), Math.round(hv.y - sp.height / 2)); g.globalAlpha = 1; } }
+  }
+  if (Drag.active && Drag.rect) { const r = Drag.rect; g.strokeStyle = '#f3bf6c'; g.lineWidth = 2 / z; g.strokeRect(r.x0 * TW, r.y0 * TH, (r.x1 - r.x0 + 1) * TW, (r.y1 - r.y0 + 1) * TH); }
+  drawStatus();
+}
+function drawStatus() {
+  const L = App.L, hv = App.hover, st = $('status'); st.textContent = '';
+  if (!hv || !hv.in) { st.append('Move over the map. Wheel zooms, middle button or Space + drag pans.'); return; }
+  const c = L.coll(hv.cx, hv.cy), t = L.tile(hv.cx, hv.cy);
+  const part = (k, val) => st.append(h('span', null, k + ' ', h('b', null, String(val))));
+  part('cell', hv.cx + ', ' + hv.cy); part('pixel', Math.floor(hv.x) + ', ' + Math.floor(hv.y)); part('tile', t);
+  part('solid', c === 0 ? 'no' : c === 1 ? 'wall' : c === 2 ? 'ladder' : 'no');
+  if (c > 2) part('trigger', (c - 2) + ' – ' + triggerSummary(Math.min(c - 2, 253)).slice(0, 90));
+}
+
+/* ------------------------------------------------------------- hit tests */
+function hitObject(x, y) {
+  const list = App.L.objects();
+  for (let k = list.length - 1; k >= 0; k--) { const o = list[k], sp = objSprite(o.t), w = sp ? sp.width : 16, hh = sp ? sp.height : 16; if (x >= o.x - 2 && x < o.x + w + 2 && y >= o.y - 2 && y < o.y + hh + 2) return o; }
+  return null;
+}
+function hitEntity(x, y) {
+  const list = entities(); let best = null, bestA = 1e9;
+  for (const e of list) {
+    const pt = e.table === 'puzzle' && e.w === 16;
+    const inside = pt ? Math.abs(x - e.x) <= 8 && Math.abs(y - e.y) <= 8 : x >= e.x && x < e.x + e.w && y >= e.y && y < e.y + e.h;
+    if (inside && e.w * e.h < bestA) { best = e; bestA = e.w * e.h; }
+  }
+  return best;
+}
+
+/* ----------------------------------------------------------------- mouse */
+const Drag = { active: false, kind: '', rect: null };
+let spaceDown = false;
+function mousePos(ev) {
+  const r = cv.getBoundingClientRect(), v = App.view;
+  const x = v.ox + (ev.clientX - r.left) / v.zoom, y = v.oy + (ev.clientY - r.top) / v.zoom;
+  const cx = Math.floor(x / TW), cy = Math.floor(y / TH);
+  return { x, y, cx, cy, in: cx >= 0 && cy >= 0 && cx < W && cy < H, sx: ev.clientX, sy: ev.clientY };
+}
+function stampAt(cx, cy, ax, ay) {
+  const b = App.brush, L = App.L;
+  for (let j = 0; j < b.h; j++) for (let i = 0; i < b.w; i++) {
+    const x = cx + i, y = cy + j; if (x < 0 || y < 0 || x >= W || y >= H) continue;
+    const t = b.t[(((y - ay) % b.h + b.h) % b.h) * b.w + (((x - ax) % b.w + b.w) % b.w)];
+    if (L.tile(x, y) !== t) { L.setTile(x, y, t); paintBaseTile(x, y); }
+  }
+}
+function paintCell(m, erase) {
+  const L = App.L, c = L.coll(m.cx, m.cy);
+  if (App.mode === 'solid') { if (c <= 2) L.setColl(m.cx, m.cy, erase ? 0 : App.solidVal); }
+  else if (App.mode === 'trig') { if (erase) { if (c > 2) L.setColl(m.cx, m.cy, 0); } else if (c !== 1 && c !== 2 || Drag.force) L.setColl(m.cx, m.cy, App.trigNum + 2); }
+}
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); zoomBy(e.deltaY < 0 ? 1 : -1, e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+cv.addEventListener('mousedown', ev => {
+  if (!App.L) return;
+  const m = mousePos(ev), L = App.L; cv.focus();
+  if (ev.button === 1 || (ev.button === 0 && spaceDown)) { ev.preventDefault(); Object.assign(Drag, { active: true, kind: 'pan', sx: ev.clientX, sy: ev.clientY, ox: App.view.ox, oy: App.view.oy }); return; }
+  if (!m.in) return;
+  const right = ev.button === 2;
+  if (App.mode === 'tiles') {
+    if (right) { App.brush = { w: 1, h: 1, t: [L.tile(m.cx, m.cy)] }; renderTools(); redraw(); return; }
+    if (ev.shiftKey) { Object.assign(Drag, { active: true, kind: 'grab', ax: m.cx, ay: m.cy, rect: { x0: m.cx, y0: m.cy, x1: m.cx, y1: m.cy } }); return; }
+    if (App.tileTool === 'rect') { Object.assign(Drag, { active: true, kind: 'fill', ax: m.cx, ay: m.cy, rect: { x0: m.cx, y0: m.cy, x1: m.cx, y1: m.cy } }); return; }
+    beginEdit(); Object.assign(Drag, { active: true, kind: 'paint', ax: m.cx, ay: m.cy }); stampAt(m.cx, m.cy, m.cx, m.cy);
+  } else if (App.mode === 'solid' || App.mode === 'trig') {
+    if (App.mode === 'trig' && ev.altKey) { const c = L.coll(m.cx, m.cy); if (c > 2 && c - 2 <= 253) { App.trigNum = c - 2; select({ kind: 'trig', n: c - 2 }, false); renderTools(); } return; }
+    beginEdit(); Object.assign(Drag, { active: true, kind: 'cells', erase: right, force: ev.ctrlKey }); paintCell(m, right);
+  } else if (App.mode === 'obj' || App.mode === 'pick') {
+    const o = (App.show.obj || App.mode === 'obj') ? hitObject(m.x, m.y) : null;
+    if (App.mode === 'obj' && right) { if (o) { beginEdit(); changeObject(o.i, 0, 0, -1); if (App.sel && App.sel.kind === 'obj' && App.sel.i === o.i) App.sel = null; refreshAll(); } return; }
+    if (right) return;
+    if (o) { select({ kind: 'obj', i: o.i }, false); Object.assign(Drag, { active: true, kind: 'moveObj', i: o.i, dx: m.x - o.x, dy: m.y - o.y, moved: false, snap: false }); return; }
+    if (App.mode === 'obj') {
+      const i = L.freeObj(); if (i < 0) { toast('All 200 object slots are in use.', true); return; }
+      const sp = objSprite(App.objType), w = sp ? sp.width : 16, hh = sp ? sp.height : 16;
+      let x = Math.round(m.x - w / 2), y = Math.round(m.y - hh / 2);
+      if (ev.shiftKey) { x = m.cx * TW; y = m.cy * TH + TH - hh; }
+      beginEdit();
+      if (isSwitch(App.objType) && !addSwitch(x, y, App.objType)) { toast('The switch table is full (64 switches).', true); App.undo.pop(); return; }
+      L.setObj(i, x, y, App.objType); select({ kind: 'obj', i }, false); refreshAll(); return;
+    }
+    const e = hitEntity(m.x, m.y);
+    if (e) { select({ kind: 'rec', table: e.table, i: e.i }, false); Object.assign(Drag, { active: true, kind: 'moveRec', e, mx: m.x, my: m.y, moved: false, last: [0, 0] }); return; }
+    const c = L.coll(m.cx, m.cy);
+    if (c > 2 && App.show.trig) { App.trigNum = Math.min(c - 2, 253); select({ kind: 'trig', n: Math.min(c - 2, 253) }, false); return; }
+    select(null, false);
+  }
+  redraw();
+});
+window.addEventListener('mousemove', ev => {
+  if (!App.L) return;
+  const m = mousePos(ev), L = App.L;
+  if (ev.target === cv || Drag.active) App.hover = m; else if (App.hover) { App.hover = null; redraw(); return; } else return;
+  if (Drag.active) {
+    const D = Drag;
+    if (D.kind === 'pan') { App.view.ox = D.ox - (ev.clientX - D.sx) / App.view.zoom; App.view.oy = D.oy - (ev.clientY - D.sy) / App.view.zoom; clampView(); }
+    else if (D.kind === 'paint') { if (m.in) stampAt(m.cx - ((m.cx - D.ax) % App.brush.w + App.brush.w) % App.brush.w, m.cy - ((m.cy - D.ay) % App.brush.h + App.brush.h) % App.brush.h, D.ax, D.ay); }
+    else if (D.kind === 'grab' || D.kind === 'fill') { const cx = clamp(m.cx, 0, W - 1), cy = clamp(m.cy, 0, H - 1); D.rect = { x0: Math.min(D.ax, cx), y0: Math.min(D.ay, cy), x1: Math.max(D.ax, cx), y1: Math.max(D.ay, cy) }; }
+    else if (D.kind === 'cells') { if (m.in) paintCell(m, D.erase); }
+    else if (D.kind === 'moveObj') {
+      const o = L.obj(D.i); let x = Math.round(m.x - D.dx), y = Math.round(m.y - D.dy);
+      if (ev.shiftKey) { const sp = objSprite(o.t), hh = sp ? sp.height : 16; x = Math.round(x / 16) * 16; y = Math.floor((y + hh) / TH) * TH - hh; }
+      x = clamp(x, 0, W * TW - 1); y = clamp(y, 0, H * TH - 1);
+      if (x !== o.x || y !== o.y) { if (!D.moved) { beginEdit(); D.moved = true; } changeObject(D.i, x, y, o.t); }
+    } else if (D.kind === 'moveRec') {
+      const dx = m.x - D.mx, dy = m.y - D.my;
+      if (!D.moved && Math.abs(dx) + Math.abs(dy) < 4 / App.view.zoom) return;
+      if (!D.moved) { beginEdit(); D.moved = true; D.orig = L.snapshot(); }
+      moveRecBy(D, dx, dy, ev.shiftKey);
+    }
+  }
+  redraw();
+});
+window.addEventListener('mouseup', () => {
+  if (!Drag.active) return;
+  const D = Drag, L = App.L;
+  if (D.kind === 'grab') {
+    const r = D.rect, w = r.x1 - r.x0 + 1, hh = r.y1 - r.y0 + 1, t = [];
+    for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) t.push(L.tile(x, y));
+    App.brush = { w, h: hh, t }; renderTools();
+  } else if (D.kind === 'fill') {
+    const r = D.rect; beginEdit();
+    for (let y = r.y0; y <= r.y1; y += App.brush.h) for (let x = r.x0; x <= r.x1; x += App.brush.w) {
+      const b = App.brush;
+      for (let j = 0; j < b.h && y + j <= r.y1; j++) for (let i = 0; i < b.w && x + i <= r.x1; i++) { L.setTile(x + i, y + j, b.t[j * b.w + i]); paintBaseTile(x + i, y + j); }
+    }
+  }
+  const refresh = D.kind === 'cells' || (D.moved && (D.kind === 'moveObj' || D.kind === 'moveRec'));
+  Drag.active = false; Drag.rect = null; Drag.kind = '';
+  if (refresh) refreshAll(); else redraw();
+});
+cv.addEventListener('mouseleave', () => { if (!Drag.active) { App.hover = null; redraw(); } });
+
+/** drags a record's position; cell-bound things move in whole cells */
+function moveRecBy(D, dx, dy, snap) {
+  const L = App.L, e = D.e, tn = e.table, i = e.i;
+  L.restore(D.orig);
+  const g = k => L.get(tn, i, k), set = (k, v) => L.set(tn, i, k, v);
+  const cdx = Math.round(dx / TW) * TW, cdy = Math.round(dy / TH) * TH;
+  if (tn === 'ground') { set('x', clamp(Math.round(g('x') + (snap ? cdx : dx)), 0, 4095)); set('y', clamp(Math.round(g('y') + (snap ? cdy : dy)), 0, 1023)); }
+  else if (tn === 'walker' || tn === 'flyer') { set('cx', clamp(g('cx') + cdx / TW, 0, W - 1)); set('cy', clamp(g('cy') + cdy / TH, 0, H - 1)); }
+  else if (tn === 'trapdoor') {
+    const ox = g('x'), oy = g('y'), nx = clamp(ox + cdx, 0, 4064), ny = clamp(oy + cdy, 0, 1008);
+    set('x', nx); set('y', ny);
+    for (const p of puzzlesWhere(q => (q('action') === 7 || q('action') === 8) && q('x') === ox && q('y') === oy)) { L.set('puzzle', p, 'x', nx); L.set('puzzle', p, 'y', ny); }
+  }
+  else if (tn === 'block') { for (const [kx, ky] of [['x', 'y'], ['x1', 'y1'], ['x2', 'y2'], ['x3', 'y3'], ['x4', 'y4']]) if (kx === 'x' || g(kx) || g(ky)) { set(kx, g(kx) + Math.round(dx)); set(ky, g(ky) + Math.round(dy)); } }
+  else if (tn === 'teleport') { set('x', clamp(Math.round(g('x') + dx), 0, 4095)); set('y', clamp(Math.round(g('y') + dy), 0, 1023)); }
+  else if (tn === 'puzzle') {
+    const a = g('action'), cell = a === 2 || a === 9 || a === 3 || a === 4 || a === 7 || a === 8;
+    set('x', clamp(Math.round(g('x') + (cell ? cdx : dx)), 0, 4095)); set('y', clamp(Math.round(g('y') + (cell ? cdy : dy)), 0, 1023));
+  }
+}
+
+/* -------------------------------------------------------------- keyboard */
+window.addEventListener('keydown', ev => {
+  if (!App.L) return;
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if (ev.ctrlKey || ev.metaKey) {
+    const k = ev.key.toLowerCase();
+    if (k === 's') { ev.preventDefault(); saveLevel(false); }
+    else if (k === 'z' && !typing) { ev.preventDefault(); ev.shiftKey ? doUndo(App.redo, App.undo) : doUndo(App.undo, App.redo); }
+    else if (k === 'y' && !typing) { ev.preventDefault(); doUndo(App.redo, App.undo); }
+    return;
+  }
+  if (typing) return;
+  if (ev.key === ' ') { spaceDown = true; ev.preventDefault(); return; }
+  const modes = { 1: 'tiles', 2: 'solid', 3: 'trig', 4: 'obj', 5: 'pick' };
+  if (modes[ev.key]) { setMode(modes[ev.key]); return; }
+  if (ev.key === 'g' || ev.key === 'G') { App.show.grid = !App.show.grid; renderViewMenu(); redraw(); return; }
+  if (ev.key === '+' || ev.key === '=') zoomBy(1); if (ev.key === '-') zoomBy(-1);
+  const s = App.sel;
+  if (s && s.kind === 'obj') {
+    const o = App.L.obj(s.i), step = ev.shiftKey ? 8 : 1;
+    const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[ev.key];
+    if (d) { ev.preventDefault(); beginEdit(); changeObject(s.i, o.x + d[0], o.y + d[1], o.t); refreshAll(); }
+    if (ev.key === 'Delete' || ev.key === 'Backspace') { ev.preventDefault(); beginEdit(); changeObject(s.i, 0, 0, -1); App.sel = null; refreshAll(); }
+  }
+});
+window.addEventListener('keyup', ev => { if (ev.key === ' ') spaceDown = false; });
+
+/* ============================================================================
+   Panels: tool palettes, lists, detail forms
+   ========================================================================== */
+const TABS = [['sel', 'Selection'], ['trig', 'Triggers'], ['puz', 'Puzzles'], ['mon', 'Monsters'], ['mech', 'Machines'], ['text', 'Text'], ['check', 'Check'], ['guide', 'Guide']];
+const SUB = { mon: 'ground', mech: 'switch' };
+const Filter = { q: '', used: true };
+
+function refreshAll() { renderTools(); renderTabs(); renderSide(); redraw(); }
+function setMode(m) {
+  App.mode = m;
+  for (const b of $('modes').children) b.classList.toggle('on', b.dataset.m === m);
+  cv.style.cursor = m === 'pick' ? 'default' : 'crosshair';
+  renderTools(); redraw();
+}
+for (const b of $('modes').children) b.onclick = () => setMode(b.dataset.m);
+function setTab(t) { App.tab = t; renderTabs(); renderSide(); $('sidePane').scrollTop = 0; }
+function select(sel, center, from) {
+  App.sel = sel; App.backFrom = from || null;
+  if (sel && sel.kind === 'tab') { App.sel = null; setTab(sel.tab); return; }
+  if (sel && center) {
+    let p = null;
+    if (sel.kind === 'obj') { const o = App.L.obj(sel.i); p = [o.x, o.y]; }
+    else if (sel.kind === 'trig') p = recPos('trigger', sel.n - 1);
+    else if (sel.kind === 'rec') p = recPos(sel.table, sel.i);
+    if (p) centerOn(p[0], p[1]);
+  }
+  if (sel && sel.kind === 'trig') App.trigNum = sel.n;
+  App.tab = 'sel'; refreshAll(); $('sidePane').scrollTop = 0;
+}
+function renderTabs() {
+  const box = $('tabs'); box.textContent = '';
+  const issues = App.L ? runChecks().filter(i => i.sev !== 'info').length : 0;
+  for (const [id, name] of TABS) box.append(h('button', { class: App.tab === id ? 'on' : '', onclick: () => setTab(id) }, name, id === 'check' && issues ? h('span', { class: 'cnt', text: issues }) : null));
+}
+function renderViewMenu() {
+  const p = $('viewPop'); p.textContent = '';
+  const opts = [['trig', 'Trigger cells'], ['obj', 'Objects'], ['mon', 'Monster spawn points'], ['mech', 'Doors, trapdoors, blocks, teleports'], ['puz', 'Puzzle targets'], ['links', 'Arrows for the selection'], ['solid', 'Walls and ladders'], ['grid', 'Cell grid (G)']];
+  for (const [k, name] of opts) p.append(h('label', null, h('input', { type: 'checkbox', checked: App.show[k], onchange: e => { App.show[k] = e.target.checked; redraw(); } }), name));
+}
+renderViewMenu();
+
+/* ------------------------------------------------------------ left pane */
+function tileThumb(v, scale) {
+  const c = document.createElement('canvas'); c.width = TW; c.height = TH; drawTileTo(c.getContext('2d'), v, 0, 0); return c;
+}
+function renderTools() {
+  const L = App.L, p = $('toolPane'); if (!L) return; const keep = p.scrollTop; p.textContent = '';
+  if (App.mode === 'tiles') {
+    p.append(h('div', { class: 'rowbtns' },
+      h('button', { class: 'btn small' + (App.tileTool === 'brush' ? ' on' : ''), onclick: () => { App.tileTool = 'brush'; renderTools(); } }, 'Brush'),
+      h('button', { class: 'btn small' + (App.tileTool === 'rect' ? ' on' : ''), onclick: () => { App.tileTool = 'rect'; renderTools(); } }, 'Fill rectangle')));
+    p.append(h('p', { class: 'hintline' }, 'Drag across the palette to pick a block of tiles. On the map: ', h('kbd', null, 'right click'), ' picks one tile, ', h('kbd', null, 'Shift'), ' + drag copies an area.'));
+    const b = App.brush;
+    p.append(h('p', { class: 'hintline' }, `Brush: ${b.w} × ${b.h}` + (b.w * b.h === 1 ? `, tile ${b.t[0]}` + (b.t[0] > L.tileCount ? ' (no picture in this map)' : '') : '')));
+    const zs = [1, 2], pz = App.palZoom;
+    p.append(h('div', { class: 'rowbtns' }, h('span', { class: 'hintline', style: 'margin:0;align-self:center;flex:none' }, 'Palette size'),
+      zs.map(z => h('button', { class: 'btn small' + (pz === z ? ' on' : ''), onclick: () => { App.palZoom = z; renderTools(); } }, z + '\u00d7'))));
+    /* the pane keeps its width; a larger palette wraps into fewer columns and grows downwards */
+    let cols = Math.max(1, Math.floor((p.clientWidth - 20 + 1) / (TW * pz + 1)));
+    cols = cols >= 10 ? 10 : cols >= 5 ? 5 : cols;
+    const grid = h('div', { id: 'tilePal', style: `grid-template-columns:repeat(${cols},${TW * pz}px)` });
+    const cells = [];
+    const total = Math.ceil((L.tileCount + 1) / cols) * cols;
+    let down = -1;
+    const mark = (a, bb) => { const x0 = Math.min(a % cols, bb % cols), x1 = Math.max(a % cols, bb % cols), y0 = Math.min((a / cols) | 0, (bb / cols) | 0), y1 = Math.max((a / cols) | 0, (bb / cols) | 0);
+      cells.forEach((c, k) => c.classList.toggle('on', k % cols >= x0 && k % cols <= x1 && ((k / cols) | 0) >= y0 && ((k / cols) | 0) <= y1)); return [x0, y0, x1, y1]; };
+    /* palette cell k shows tile value k+1 in reading order; the cell after the last tile is "empty" */
+    const valOf = k => k < L.tileCount ? k + 1 : 0;
+    for (let k = 0; k < total; k++) {
+      const c = tileThumb(valOf(k)); c.title = valOf(k) ? 'tile ' + valOf(k) : 'empty';
+      c.style.width = TW * pz + 'px'; c.style.height = TH * pz + 'px';
+      c.addEventListener('mousedown', e => { e.preventDefault(); down = k; mark(k, k); });
+      c.addEventListener('mouseenter', () => { if (down >= 0) mark(down, k); });
+      c.addEventListener('mouseup', () => { if (down < 0) return; const [x0, y0, x1, y1] = mark(down, k); down = -1; const t = [];
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) t.push(valOf(y * cols + x)); App.brush = { w: x1 - x0 + 1, h: y1 - y0 + 1, t }; renderTools(); });
+      if (b.w * b.h === 1 && valOf(k) === b.t[0]) c.classList.add('on');
+      cells.push(c); grid.append(c);
+    }
+    p.append(h('div', { class: 'palWrap' }, grid));
+    p.append(h('p', { class: 'hintline', style: 'margin-top:10px' }, `This map loads ${L.tileCount} tiles. Door tiles: ${L.info.doorOpen} or ${L.info.doorClosed} placed at the top-left cell become a closed door (2 × 3 cells) when the level starts.`));
+  } else if (App.mode === 'solid') {
+    const opt = (v, name, col) => h('button', { class: 'btn' + (App.solidVal === v ? ' on' : ''), onclick: () => { App.solidVal = v; renderTools(); } }, h('span', { class: 'swatch', style: 'background:' + col }), name);
+    p.append(h('div', { class: 'rowbtns' }, opt(1, 'Wall', '#d8553f'), opt(2, 'Ladder', '#6aa7e8'), opt(0, 'Empty', '#39414e')));
+    p.append(h('p', { class: 'hintline' }, 'Drag to paint, ', h('kbd', null, 'right click'), ' to clear. Trigger cells are left alone; a cell is either solid, a ladder, or a trigger.'));
+    p.append(h('p', { class: 'hintline' }, 'The picture and the collision of a cell are independent: tiles only decide how it looks.'));
+  } else if (App.mode === 'trig') {
+    const n = App.trigNum;
+    const selN = h('select', { style: 'width:100%', onchange: e => { App.trigNum = +e.target.value; renderTools(); } });
+    for (let k = 1; k <= 253; k++) selN.append(h('option', { value: k, selected: k === n, text: `${k}: ${triggerSummary(k).slice(0, 60)}` }));
+    p.append(h('p', { class: 'hintline' }, 'Paint cells with a trigger number. The trigger runs when the player’s body overlaps one of its cells.'));
+    p.append(selN);
+    p.append(h('div', { class: 'rowbtns', style: 'margin-top:8px' },
+      h('button', { class: 'btn small', onclick: () => select({ kind: 'trig', n }, false) }, 'Edit trigger ' + n),
+      h('button', { class: 'btn small', onclick: () => { const f = freeTrigger(); if (f < 0) toast('Every trigger is in use.', true); else { App.trigNum = f; select({ kind: 'trig', n: f }, false); } } }, 'Next unused')));
+    p.append(h('p', { class: 'hintline' }, h('kbd', null, 'right click'), ' erases a trigger cell, ', h('kbd', null, 'Alt'), ' + click picks its number, ', h('kbd', null, 'Ctrl'), ' + drag also paints over walls.'));
+    p.append(h('div', { class: 'h' }, 'Colours'));
+    const names = [[1, 'Flying wave / flyer gang'], [2, 'Ground patrol'], [3, 'Puzzle'], [4, 'Walker gang'], [6, 'Checkpoint'], [7, 'Moving block'], [11, 'Guardian'], [0, 'No type yet']];
+    for (const [t, nm] of names) p.append(h('div', { style: 'margin-bottom:3px' }, h('span', { class: 'swatch', style: 'background:' + TRIG_COLORS[t] }), nm));
+  } else if (App.mode === 'obj') {
+    p.append(h('p', { class: 'hintline' }, 'Click the map to place. Drag an object to move it, ', h('kbd', null, 'right click'), ' or ', h('kbd', null, 'Del'), ' removes it, ', h('kbd', null, 'Shift'), ' snaps to the floor of a cell.'));
+    p.append(h('p', { class: 'hintline' }, `${L.objects().length} of ${NOBJ} slots used.`));
+    const q = h('input', { type: 'search', placeholder: 'Find an item', style: 'width:100%;margin-bottom:6px', value: renderTools.q || '' });
+    const box = h('div', { class: 'chips' });
+    const fill = () => {
+      renderTools.q = q.value; box.textContent = ''; const needle = q.value.toLowerCase();
+      const groups = [[2, 'Inventory items (keys and quest pieces)'], [3, 'Switches and levers'], [0, 'Power-ups'], [1, 'Treasure'], [6, 'Weapons'], [4, 'Obstacles'], [5, 'Scenery']];
+      for (const [cat, title] of groups) {
+        const ids = cat === 6 ? WEAPONS.map((_, k) => 192 + k) : App.items.filter(it => it.cat === cat).map(it => it.id);
+        const shown = ids.filter(t => !needle || itemName(t).toLowerCase().includes(needle) || String(t) === needle);
+        if (!shown.length) continue;
+        box.append(h('div', { class: 'catHead', text: title }));
+        for (const t of shown) {
+          const sp = objSprite(t), ic = h('canvas', { width: 24, height: 24 });
+          if (sp && sp.width) { const s = Math.min(24 / sp.width, 24 / sp.height, 1.5), g = ic.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(sp, (24 - sp.width * s) / 2, (24 - sp.height * s) / 2, sp.width * s, sp.height * s); }
+          box.append(h('button', { class: 'chip' + (App.objType === t ? ' on' : ''), onclick: () => { App.objType = t; renderTools(); } }, h('span', { class: 'n', text: t }), ic, h('span', null, itemName(t))));
+        }
+      }
+    };
+    q.addEventListener('input', fill); fill(); p.append(q, box);
+  } else {
+    p.append(h('p', { class: 'hintline' }, 'Click anything on the map to inspect it. Drag objects, spawn points, trapdoors, blocks and puzzle targets to move them.'));
+    p.append(h('div', { class: 'h' }, 'What the outlines mean'));
+    const leg = [['#f3bf6c', 'Puzzle target (item, door, trapdoor action)'], ['#d8553f', 'Ground patrol spawn'], ['#e07a5f', 'Walker gang start'], ['#e6a15a', 'Flyer gang start'], ['#55b39a', 'Trapdoor, switch'], ['#b58ae6', 'Moving block'], ['#6aa7e8', 'Teleport destination'], ['#d9933f', 'Door built from tiles']];
+    for (const [c, nm] of leg) p.append(h('div', { style: 'margin-bottom:3px' }, h('span', { class: 'swatch', style: 'background:' + c }), nm));
+    p.append(h('div', { class: 'h' }, 'This map'));
+    const cp = L.cellsOfTrigger(253).length;
+    p.append(h('p', { class: 'hintline' }, `${L.objects().length} objects, ${cp} checkpoint cells, ${L.tileCount} tiles.`));
+    if (L.letter === 'A') p.append(h('p', { class: 'hintline' }, `A new game starts at ${L.info.start[0]}, ${L.info.start[1]}.`));
+    p.append(h('button', { class: 'btn small', onclick: () => centerOn(L.info.start[0], L.info.start[1]) }, 'Go to the start'));
+  }
+  p.scrollTop = keep;
+}
+function freeTrigger() {
+  const L = App.L, used = new Set(); for (let i = 0; i < W * H; i++) { const v = L.map[L.C + i]; if (v > 2) used.add(v - 2); }
+  for (let n = 1; n < 252; n++) if (L.trig(n).type === 0 && !used.has(n) && !puzzlesFiring(n).length && !puzzlesTestingTrigger(n).length) return n;
+  return -1;
+}
+
+/* ----------------------------------------------------------- right pane */
+function renderSide() {
+  const L = App.L, p = $('sidePane'); if (!L) return; const keep = p.scrollTop; p.textContent = '';
+  const t = App.tab;
+  if (t === 'sel') renderSelection(p);
+  else if (t === 'trig') renderList(p, 'trigger');
+  else if (t === 'puz') renderList(p, 'puzzle');
+  else if (t === 'mon' || t === 'mech') {
+    const subs = t === 'mon' ? ['ground', 'wave', 'walker', 'flyer'] : ['switch', 'trapdoor', 'block', 'teleport'];
+    const seg = h('div', { class: 'seg' });
+    for (const s of subs) seg.append(h('button', { class: SUB[t] === s ? 'on' : '', onclick: () => { SUB[t] = s; renderSide(); } }, TABLES[s].title));
+    p.append(seg); renderList(p, SUB[t]);
+  }
+  else if (t === 'text') renderText(p);
+  else if (t === 'check') renderChecks(p);
+  else renderGuide(p);
+  p.scrollTop = keep;
+}
+const selOf = (tn, i) => tn === 'trigger' ? { kind: 'trig', n: i + 1 } : { kind: 'rec', table: tn, i };
+function linkTo(text, sel) { return h('button', { class: 'link', onclick: () => select(sel, true, App.tab !== 'sel' ? App.tab : App.backFrom) }, text); }
+
+function renderList(p, tn) {
+  const L = App.L, T = TABLES[tn];
+  const q = h('input', { type: 'search', placeholder: 'Filter', value: Filter.q });
+  const used = h('input', { type: 'checkbox', checked: Filter.used });
+  const list = h('div', { class: 'list' });
+  const blurb = { trigger: 'A trigger runs when the player touches a cell that carries its number, or when a puzzle fires it. Each trigger runs once.',
+    puzzle: 'A puzzle waits until its conditions hold, then performs one action. It needs a trigger of type “Puzzle” to be checked.',
+    wave: 'Formations that fly along a recorded path.', ground: 'Monsters that appear at a fixed spot and walk.',
+    walker: 'Smarter walking monsters; they can steal items and weapons lying around.', flyer: 'Smarter flying monsters that chase the player.',
+    switch: 'One entry per lever or switch object. Puzzles test them by this number. The editor keeps this table in step with the objects.',
+    trapdoor: 'One-cell floor pieces that puzzles open and close.', block: 'Platforms and lifts that move between waypoints when a trigger tells them to.',
+    teleport: 'Where each teleport stone sends the player. The stone is matched by its x position.' }[tn];
+  p.append(h('p', { class: 'hintline', text: blurb }));
+  const fill = () => {
+    Filter.q = q.value; Filter.used = used.checked; list.textContent = ''; const needle = q.value.toLowerCase(); let shown = 0;
+    for (let i = 0; i < T.count; i++) {
+      const empty = L.isEmpty(tn, i); if (Filter.used && empty) continue;
+      const s = recSummary(tn, i); if (needle && !s.toLowerCase().includes(needle) && String(i + (T.first || 0)) !== needle) continue;
+      let extra = '';
+      if (tn === 'trigger') { const c = L.cellsOfTrigger(i + 1).length; extra = c ? c + (c === 1 ? ' cell' : ' cells') : ''; }
+      else if (tn !== 'switch' && tn !== 'teleport' && tn !== 'trapdoor') { const u = triggersUsing(tn, i); extra = u.length ? 'trig ' + u.slice(0, 3).join(', ') + (u.length > 3 ? '…' : '') : ''; }
+      const cur = App.sel && ((tn === 'trigger' && App.sel.kind === 'trig' && App.sel.n === i + 1) || (App.sel.kind === 'rec' && App.sel.table === tn && App.sel.i === i));
+      list.append(h('button', { class: 'row' + (empty ? ' empty' : '') + (cur ? ' sel' : ''), onclick: () => select(selOf(tn, i), true, App.tab) },
+        h('span', { class: 'n', text: i + (T.first || 0) }), h('span', { class: 'd', text: s, title: s }), h('span', { class: 'x', text: extra })));
+      shown++;
+    }
+    if (!shown) list.append(h('p', { class: 'hintline', text: Filter.used ? 'Nothing in use matches. Untick “in use only” to see empty slots.' : 'Nothing matches.' }));
+  };
+  q.addEventListener('input', fill); used.addEventListener('change', fill);
+  const bar = h('div', { class: 'listbar' }, q, h('label', null, used, 'in use only'));
+  if (tn !== 'trigger' && tn !== 'switch') bar.append(h('button', { class: 'btn small', onclick: () => { const i = L.firstFree(tn); if (i < 0) { toast(`All ${T.count} ${T.title.toLowerCase()} are in use.`, true); return; } beginEdit(); newRec(tn, i); select(selOf(tn, i), true, App.tab); } }, 'New'));
+  p.append(bar, list); fill();
+}
+/** fills a fresh record with sensible values near the middle of the view */
+function newRec(tn, i) {
+  const L = App.L, v = App.view, mx = clamp(Math.round(v.ox + cv.width / v.zoom / 2), 32, 4000), my = clamp(Math.round(v.oy + cv.height / v.zoom / 2), 32, 960);
+  const set = (k, val) => L.set(tn, i, k, val);
+  L.clearRec(tn, i);
+  if (tn === 'wave') { set('count', 3); set('path', 0); set('spacing', 12); set('hp', 1); set('enemy', 0); set('drop', 255); }
+  else if (tn === 'ground') { set('x', mx & ~31); set('y', (my & ~15)); set('dir', 1); set('exit', 5); set('spacing', 21); set('count', 1); set('hp', 1); set('enemy', 0); set('drop', 255); }
+  else if (tn === 'walker' || tn === 'flyer') { set('count', 1); set('hp', 5); set('cx', mx >> 5); set('cy', my >> 4); set('spacing', 10); set('speed', 6); set('accel', 6); set('range', 32); set('reward', 0xFFFF); if (tn === 'flyer') { set('prob', 127); set('modeA', 2); set('timer', 16); } }
+  else if (tn === 'trapdoor') { set('x', mx & ~31); set('y', my & ~15); set('open', 0); }
+  else if (tn === 'block') { set('x', mx & ~31); set('y', my & ~15); set('x1', mx & ~31); set('y1', (my & ~15) - 64); set('x2', mx & ~31); set('y2', my & ~15); set('cmd1', 2); set('cmd2', 3); set('cmd3', -1); set('cmd4', -1); set('speed', 0); }
+  else if (tn === 'teleport') { set('src', 1); set('x', mx); set('y', my); }
+  else if (tn === 'puzzle') { set('x', mx); set('y', my); set('action', 0); set('param', 0); set('text', emptyTextIndex()); }
+}
+function emptyTextIndex() { const t = App.L.texts(); for (let i = NTEXT - 1; i >= 0; i--) if (!t[i]) return i; return 0; }
+
+/* ---- selection details ---- */
+function renderSelection(p) {
+  const s = App.sel, L = App.L;
+  if (App.backFrom) p.append(h('button', { class: 'link', style: 'margin-bottom:8px;display:block', onclick: () => setTab(App.backFrom) }, '‹ Back to ' + (TABS.find(t => t[0] === App.backFrom) || ['', 'list'])[1].toLowerCase()));
+  if (!s) {
+    p.append(h('div', { class: 'title', text: 'Nothing selected' }), h('p', { class: 'sub', text: 'Pick the Select tool (5) and click a trigger cell, an object or a marker on the map, or choose a row in one of the lists.' }));
+    p.append(h('div', { class: 'note' }, 'New here? The ', h('button', { class: 'link', onclick: () => setTab('guide') }, 'Guide'), ' explains how cells, triggers and puzzles work together.'));
+    return;
+  }
+  if (s.kind === 'obj') return detailObject(p, s.i);
+  if (s.kind === 'trig') return detailTrigger(p, s.n);
+  if (s.kind === 'rec') return detailRecord(p, s.table, s.i);
+}
+function field(labelText, ctl, help) {
+  const f = h('div', { class: 'field' }, h('label', { text: labelText }), h('div', { class: 'ctl' }, ctl));
+  if (help) f.append(h('div', { class: 'help', text: help }));
+  return f;
+}
+function numInput(val, min, max, onchange, width) {
+  return h('input', { type: 'number', value: val, min, max, style: width ? `width:${width}px` : null, onchange: e => { let v = Math.round(+e.target.value || 0); v = clamp(v, min, max); onchange(v); } });
+}
+function selectInput(options, val, onchange) {
+  const s = h('select', { onchange: e => onchange(+e.target.value) }); let found = false;
+  for (const [v, name] of options) { if (v === val) found = true; s.append(h('option', { value: v, selected: v === val, text: name })); }
+  if (!found) s.append(h('option', { value: val, selected: true, text: `unknown (${val})` }));
+  return s;
+}
+const itemOptions = () => App.items.map(it => [it.id, `${it.id}: ${itemName(it.id)}`]);
+const weaponOptions = () => WEAPONS.map((w, k) => [k, `${k}: ${w}`]);
+const dropOptions = none => [[none, 'Nothing'], ...WEAPONS.map((w, k) => [k, 'Weapon: ' + w]), ...App.items.filter(it => it.cat <= 2 && it.name).map(it => [it.id + 11, itemName(it.id)])];
+const switchOptions = () => { const o = []; for (let i = 0; i < 64; i++) if (!App.L.isEmpty('switch', i)) o.push([i, `${i}: ${recSummary('switch', i)}`]); return o; };
+const textOptions = () => App.L.texts().map((t, i) => [i, `${i}: ${t || '(no message)'}`]);
+function edit(fn) { beginEdit(); fn(); refreshAll(); }
+
+function detailObject(p, i) {
+  const L = App.L, o = L.obj(i);
+  p.append(h('div', { class: 'title', text: itemName(o.t) }), h('p', { class: 'sub', text: `Object slot ${i}` + (o.t < 192 && App.items[o.t] ? ` – ${ITEM_CATEGORY[App.items[o.t].cat] || ''}` + (App.items[o.t].value ? `, value ${App.items[o.t].value}` : '') : '') }));
+  const opts = [...itemOptions(), ...WEAPONS.map((w, k) => [192 + k, `${192 + k}: weapon: ${w}`])];
+  p.append(field('Type', selectInput(opts, o.t, v => edit(() => changeObject(i, o.x, o.y, v)))));
+  p.append(field('X', numInput(o.x, 0, 4095, v => edit(() => changeObject(i, v, o.y, o.t)))));
+  p.append(field('Y', numInput(o.y, 0, 1023, v => edit(() => changeObject(i, o.x, v, o.t)))));
+  if (isSwitch(o.t)) {
+    const s = switchAt(o.x, o.y);
+    p.append(h('div', { class: 'h', text: 'Switch' }));
+    if (s < 0) p.append(h('div', { class: 'note bad' }, 'This switch is missing from the switch table, so the game removes it when the level loads. ', h('button', { class: 'link', onclick: () => edit(() => { if (!addSwitch(o.x, o.y, o.t)) toast('The switch table is full.', true); }) }, 'Add it')));
+    else {
+      p.append(h('p', { class: 'hintline' }, `This is switch ${s}. It starts ${o.t & 1 ? 'on' : 'off'}; the next item type is its other position.`));
+      const use = puzzlesTestingSwitch(s);
+      p.append(h('div', { class: 'reflist' }, use.length ? use.map(k => linkTo(`Puzzle ${k}: ${puzzleSummary(k)}`, { kind: 'rec', table: 'puzzle', i: k })) : h('span', { class: 'hintline', text: 'No puzzle tests this switch yet.' })));
+      p.append(h('button', { class: 'btn small', onclick: () => newPuzzleFor(11, s, o) }, 'New puzzle for this switch'));
+    }
+  }
+  if (isStone(o.t)) {
+    const k = teleportOf(o.x); p.append(h('div', { class: 'h', text: 'Teleport' }));
+    if (k < 0) p.append(h('p', { class: 'hintline', text: 'No destination is set for a stone at this x position; the game then uses its built-in list.' }),
+      h('button', { class: 'btn small', onclick: () => { const f = L.firstFree('teleport'); if (f < 0) return toast('All 30 teleports are in use.', true); edit(() => { L.clearRec('teleport', f); L.set('teleport', f, 'src', o.x); L.set('teleport', f, 'x', o.x); L.set('teleport', f, 'y', o.y); }); } }, 'Add a destination'));
+    else p.append(linkTo(`Teleport ${k}: to ${L.get('teleport', k, 'x')}, ${L.get('teleport', k, 'y')}`, { kind: 'rec', table: 'teleport', i: k }));
+  }
+  if (isTablet(o.t)) {
+    const k = hintOf(o.x); p.append(h('div', { class: 'h', text: 'Hint shown when picked up' }));
+    if (k < 0) p.append(h('button', { class: 'btn small', onclick: () => { let f = -1; for (let q = 0; q < NHINT; q++) if (!L.hint(q).used) { f = q; break; } if (f < 0) return toast('All 40 hints are in use.', true); edit(() => L.setHint(f, o.x, 'your hint')); } }, 'Add a hint'));
+    else p.append(h('input', { type: 'text', maxlength: 39, style: 'width:100%', value: L.hint(k).text, onchange: e => edit(() => L.setHint(k, o.x, e.target.value.toLowerCase())) }));
+  }
+  if (o.t < 192) {
+    const use = puzzlesTestingItem(o.t);
+    if (use.length) { p.append(h('div', { class: 'h', text: 'Puzzles that ask for this item' })); p.append(h('div', { class: 'reflist' }, use.map(k => linkTo(`Puzzle ${k}: ${puzzleSummary(k)}`, { kind: 'rec', table: 'puzzle', i: k })))); }
+  }
+  p.append(h('div', { style: 'margin-top:16px' }, h('button', { class: 'btn small', onclick: () => { edit(() => changeObject(i, 0, 0, -1)); App.sel = null; refreshAll(); } }, 'Delete object')));
+}
+/** creates a puzzle with one condition plus a trigger for it, ready to be painted */
+function newPuzzleFor(cond, arg, near) {
+  const L = App.L, pz = L.firstFree('puzzle'), tr = freeTrigger();
+  if (pz < 0) return toast('All 100 puzzles are in use.', true);
+  if (tr < 0) return toast('Every trigger is in use.', true);
+  beginEdit(); newRec('puzzle', pz);
+  L.set('puzzle', pz, 'c1', cond); L.set('puzzle', pz, 'p1', arg);
+  if (near) { L.set('puzzle', pz, 'x', near.x + 32); L.set('puzzle', pz, 'y', near.y); }
+  L.set('trigger', tr - 1, 'type', 3); L.set('trigger', tr - 1, 'param', pz);
+  App.trigNum = tr; select({ kind: 'rec', table: 'puzzle', i: pz }, false);
+  toast(`Puzzle ${pz} created with trigger ${tr}. Paint cells numbered ${tr} where the player should stand.`);
+}
+
+function detailTrigger(p, n) {
+  const L = App.L, t = L.trig(n), d = TRIGGER_TYPES[t.type], cells = L.cellsOfTrigger(n);
+  p.append(h('div', { class: 'title', text: 'Trigger ' + n }), h('p', { class: 'sub', text: `Cell value ${n + 2} in the collision layer` }));
+  p.append(h('div', { class: 'sentence', text: triggerSummary(n) }));
+  if (n >= 252) p.append(h('div', { class: 'note warn', text: 'The game forces trigger 252 to “start the guardian” and 253 to “checkpoint” whenever a new game begins. Leave them as they are.' }));
+  p.append(field('Type', selectInput(TRIGGER_TYPES.map(x => [x.id, x.name]), t.type, v => edit(() => L.set('trigger', n - 1, 'type', v))), d ? d.help : ''));
+  if (d && d.table) {
+    const T = TABLES[d.table];
+    const go = t.param < T.count ? linkTo('Open', selOf(d.table, t.param)) : null;
+    const mk = h('button', { class: 'btn small', onclick: () => { const f = L.firstFree(d.table); if (f < 0) return toast(`All ${T.count} ${T.title.toLowerCase()} are in use.`, true); edit(() => { newRec(d.table, f); L.set('trigger', n - 1, 'param', f); }); } }, 'New');
+    p.append(field(T.one + ' number', [numInput(t.param, 0, T.count - 1, v => edit(() => L.set('trigger', n - 1, 'param', v))), go, mk]));
+  } else if (t.type) p.append(field('Parameter', numInput(t.param, 0, 65535, v => edit(() => L.set('trigger', n - 1, 'param', v))), 'Not used by this type.'));
+  if (t.type === 6) p.append(h('div', { class: 'note' }, checkpointNote()));
+
+  p.append(h('div', { class: 'h', text: 'Where it fires' }));
+  if (cells.length) {
+    const box = h('div', { class: 'reflist' });
+    for (const c of cells.slice(0, 14)) box.append(h('button', { class: 'link', onclick: () => centerOn(c[0] * TW + 16, c[1] * TH + 8) }, `cell ${c[0]}, ${c[1]}`));
+    if (cells.length > 14) box.append(h('span', { class: 'hintline', text: `and ${cells.length - 14} more` }));
+    p.append(box);
+  } else p.append(h('p', { class: 'hintline', text: 'No cell carries this number.' }));
+  p.append(h('button', { class: 'btn small', onclick: () => { App.trigNum = n; setMode('trig'); toast(`Paint cells for trigger ${n}`); } }, 'Paint cells for this trigger'));
+  const fired = puzzlesFiring(n), tested = puzzlesTestingTrigger(n);
+  if (fired.length) { p.append(h('div', { class: 'h', text: 'Fired by puzzles' })); p.append(h('div', { class: 'reflist' }, fired.map(k => linkTo(`Puzzle ${k}: ${puzzleSummary(k)}`, { kind: 'rec', table: 'puzzle', i: k })))); }
+  if (tested.length) { p.append(h('div', { class: 'h', text: 'Puzzles that check whether it has fired' })); p.append(h('div', { class: 'reflist' }, tested.map(k => linkTo(`Puzzle ${k}: ${puzzleSummary(k)}`, { kind: 'rec', table: 'puzzle', i: k })))); }
+  if (d && d.table && t.param < TABLES[d.table].count) { p.append(h('div', { class: 'h', text: TABLES[d.table].one + ' ' + t.param })); recordForm(p, d.table, t.param); }
+}
+function checkpointNote() {
+  const L = App.L, secs = L.info.sections;
+  return 'A checkpoint becomes the restart point after a death and adds one to the level’s progress count (places closer than 64 pixels to one of the last six count once). ' +
+    'The game ends a section when the count reaches a fixed number stored in GAME.EXE: ' + secs.map(s => `${s[0]} → ${s[1]}`).join('; ') + '.';
+}
+
+function detailRecord(p, tn, i) {
+  const L = App.L, T = TABLES[tn];
+  p.append(h('div', { class: 'title', text: `${T.one} ${i}` }));
+  const users = tn === 'switch' ? [] : triggersUsing(tn, i);
+  p.append(h('p', { class: 'sub', text: L.isEmpty(tn, i) ? 'This slot is empty.' : (T.title) }));
+  if (tn === 'puzzle') {
+    const q = puzzleParts(i), s = h('div', { class: 'sentence' });
+    s.append(q.conds.length ? 'When ' : 'As soon as it is checked, ');
+    q.conds.forEach((c, k) => { if (k) s.append(' and '); s.append(h('em', { text: c })); });
+    s.append(q.conds.length ? ': ' : '', h('em', { text: q.action }), '.');
+    if (q.text) s.append(' The status bar says ', h('em', { text: quote(q.text) }), '.');
+    if (q.consume) s.append(' The items named above are taken from the player.');
+    p.append(s);
+  }
+  recordForm(p, tn, i);
+  if (tn !== 'switch' && tn !== 'teleport' && tn !== 'trapdoor') {
+    p.append(h('div', { class: 'h', text: 'Triggers that use it' }));
+    if (users.length) p.append(h('div', { class: 'reflist' }, users.map(n => { const c = L.cellsOfTrigger(n).length; return linkTo(`Trigger ${n}` + (c ? ` (${c} ${c === 1 ? 'cell' : 'cells'})` : puzzlesFiring(n).length ? ' (fired by a puzzle)' : ' (no cells)'), { kind: 'trig', n }); })));
+    else p.append(h('p', { class: 'hintline', text: tn === 'puzzle' ? 'None. A puzzle is only checked while the player stands on a cell of a trigger that points to it.' : 'None, so it never appears.' }));
+    p.append(h('button', { class: 'btn small', onclick: () => {
+      const f = freeTrigger(); if (f < 0) return toast('Every trigger is in use.', true);
+      const type = { wave: 1, ground: 2, puzzle: 3, walker: 4, flyer: 5, block: 7 }[tn];
+      edit(() => { L.set('trigger', f - 1, 'type', type); L.set('trigger', f - 1, 'param', i); });
+      App.trigNum = f; setMode('trig'); toast(`Trigger ${f} now points here. Paint its cells on the map.`);
+    } }, 'Attach a new trigger'));
+  }
+  if (tn === 'switch') { const use = puzzlesTestingSwitch(i); p.append(h('div', { class: 'h', text: 'Puzzles that test it' })); p.append(h('div', { class: 'reflist' }, use.length ? use.map(k => linkTo(`Puzzle ${k}: ${puzzleSummary(k)}`, { kind: 'rec', table: 'puzzle', i: k })) : h('span', { class: 'hintline', text: 'None.' }))); }
+  if (tn === 'trapdoor') { const g = k => L.get(tn, i, k), use = puzzlesWhere(q => (q('action') === 7 || q('action') === 8) && q('x') === g('x') && q('y') === g('y')); p.append(h('div', { class: 'h', text: 'Puzzles that move it' })); p.append(h('div', { class: 'reflist' }, use.length ? use.map(k => linkTo(`Puzzle ${k}: ${puzzleSummary(k)}`, { kind: 'rec', table: 'puzzle', i: k })) : h('span', { class: 'hintline', text: 'None.' })));
+    p.append(h('p', { class: 'hintline', text: `The game draws tile ${L.info.trapClosed} when closed and tile ${L.info.trapOpen} when open, and switches the cell between wall and empty.` })); }
+  p.append(h('div', { style: 'margin-top:16px' }, h('button', { class: 'btn small', onclick: () => edit(() => L.clearRec(tn, i)) }, 'Clear this ' + T.one.toLowerCase())));
+}
+
+function recordForm(p, tn, i) {
+  const L = App.L, T = TABLES[tn], g = k => L.get(tn, i, k), set = (k, v) => edit(() => L.set(tn, i, k, v));
+  const raws = [];
+  for (const f of T.fields) {
+    const v = g(f.key), max = f.type === 'u8' ? 255 : f.type === 's8' ? 127 : f.type === 'u16' ? 65535 : f.type === 's16' ? 32767 : f.type === 'hi4' || f.type === 'lo4' ? 15 : (1 << +f.type.split(':')[2]) - 1;
+    const min = f.type === 's8' ? -128 : f.type === 's16' ? -32768 : 0;
+    const num = () => numInput(v, min, max, x => set(f.key, x));
+    let ctl = null, lab = f.label, help = f.help;
+    switch (f.kind) {
+      case 'raw': raws.push(field(lab, num())); continue;
+      case 'flag': p.append(h('div', { class: 'field check' }, h('label', null, h('input', { type: 'checkbox', checked: !!v, onchange: e => set(f.key, e.target.checked ? 1 : 0) }), lab))); continue;
+      case 'trigtype': ctl = selectInput(TRIGGER_TYPES.map(x => [x.id, x.name]), v, x => set(f.key, x)); break;
+      case 'cond': ctl = selectInput(CONDITIONS.map(x => [x.id, x.name]), v, x => set(f.key, x)); break;
+      case 'condarg': {
+        const c = CONDITIONS[g('c' + f.key[1])]; if (!c || !c.arg) continue; lab = '';
+        if (c.arg === 'item') ctl = selectInput(itemOptions(), v, x => set(f.key, x));
+        else if (c.arg === 'weapon') ctl = selectInput(weaponOptions(), v, x => set(f.key, x));
+        else if (c.arg === 'switch') { ctl = [selectInput(switchOptions(), v, x => set(f.key, x))]; if (v < 64 && !L.isEmpty('switch', v)) ctl.push(linkTo('Show', { kind: 'rec', table: 'switch', i: v })); }
+        else if (c.arg === 'trigger') ctl = [numInput(v, 1, 253, x => set(f.key, x)), v >= 1 && v <= 253 ? linkTo(triggerSummary(v).slice(0, 40), { kind: 'trig', n: v }) : null];
+        else ctl = [num(), c.unit ? h('span', { class: 'hintline', style: 'margin:0', text: c.unit }) : null];
+        break;
+      }
+      case 'action': ctl = selectInput(ACTIONS.map(x => [x.id, x.name]), v, x => set(f.key, x)); help = (ACTIONS[v] || {}).help; break;
+      case 'actionarg': {
+        const a = ACTIONS[g('action')]; if (!a || !a.arg) continue;
+        if (a.arg === 'item') { lab = 'Item'; ctl = selectInput(itemOptions(), v, x => set(f.key, x)); }
+        else if (a.arg === 'weapon') { lab = 'Weapon'; ctl = selectInput(weaponOptions(), v, x => set(f.key, x)); }
+        else if (a.arg === 'trigger') { lab = 'Trigger'; ctl = [numInput(v, 1, 253, x => set(f.key, x)), v >= 1 && v <= 253 ? linkTo(triggerSummary(v).slice(0, 44), { kind: 'trig', n: v }) : null]; }
+        else if (a.arg === 'exit') { lab = 'Ends'; ctl = selectInput([[2, 'Level one'], [3, 'Level two'], [4, 'Level three'], [5, 'The game']], v, x => set(f.key, x)); }
+        else if (a.arg === 'cell') { lab = 'Destination cell';
+          ctl = [numInput(v >> 8, 0, 127, x => set(f.key, (x << 8) | (v & 255)), 60), numInput(v & 255, 0, 63, y => set(f.key, (v & 0xFF00) | y), 60),
+                 h('button', { class: 'link', onclick: () => centerOn((v >> 8) * TW + 16, (v & 255) * TH) }, 'Show')];
+          help = 'The player arrives with the top of the body in this cell; the feet are three cells lower.'; }
+        else { lab = 'Parameter'; ctl = num(); }
+        break;
+      }
+      case 'text': ctl = selectInput(textOptions(), v, x => set(f.key, x)); help = 'Edit the wording in the Text tab.'; break;
+      case 'px': case 'py': {
+        if (tn === 'puzzle') { const a = ACTIONS[g('action')]; if (a && !a.pos) continue; }
+        ctl = num(); break;
+      }
+      case 'path': { ctl = num(); const pth = App.paths[v]; help = pth ? (pth.abs ? `Starts at ${pth.x}, ${pth.y} on the map` : `Starts ${pth.x}, ${pth.y} from the top-left of the screen`) + `, ${pth.steps.length} frames` : 'This path does not exist.'; break; }
+      case 'enemyF': case 'enemyG': {
+        const lst = f.kind === 'enemyF' ? L.info.fly : L.info.ground, sp = enemySprite(f.kind === 'enemyF' ? 'F' : 'G', v);
+        ctl = [selectInput(lst.map((e, k) => [k, 'type ' + k]), v, x => set(f.key, x))];
+        if (sp && sp.width) { const c = h('canvas', { width: sp.width, height: sp.height, style: `width:${sp.width}px;image-rendering:pixelated` }); c.getContext('2d').drawImage(sp, 0, 0); ctl.push(c); }
+        break;
+      }
+      case 'drop': ctl = selectInput(dropOptions(255), v, x => set(f.key, x)); break;
+      case 'reward16': ctl = selectInput(dropOptions(0xFFFF), v, x => set(f.key, x)); break;
+      case 'dir': ctl = selectInput([[0, 'Left'], [1, 'Right']], v ? 1 : 0, x => set(f.key, x)); break;
+      case 'exit': ctl = selectInput(EXIT_RULES.map((s, k) => [k, s]), v, x => set(f.key, x)); break;
+      case 'steal': ctl = selectInput(STEAL_MODES.map((s, k) => [k, s]), v, x => set(f.key, x)); break;
+      case 'shot': ctl = selectInput(SHOT_MODES.map((s, k) => [k, s]), v, x => set(f.key, x)); break;
+      case 'blockcmd': ctl = selectInput(BLOCK_CMDS, v, x => set(f.key, x)); break;
+      default: ctl = num();
+    }
+    p.append(field(lab, ctl, help));
+    if (f.kind === 'path' && App.paths[v]) p.append(pathPreview(App.paths[v]));
+  }
+  if (tn === 'puzzle') { const a = g('action'); if (a === 2 || a === 9 || a === 3 || a === 4) { const [cx, cy] = doorCell(g('x'), g('y')); p.append(h('p', { class: 'hintline', text: `Doors snap to the cell grid: this one is at cell ${cx / TW}, ${cy / TH}.` })); } }
+  if (raws.length) { p.append(h('div', { class: 'h', text: 'Raw values' })); for (const r of raws) p.append(r); }
+}
+function pathPreview(path) {
+  let x = 0, y = 0, x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+  for (const [dx, dy] of path.steps) { x += dx; y += dy; x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+  const w = 380, hh = 150, s = Math.min((w - 20) / Math.max(1, x1 - x0), (hh - 20) / Math.max(1, y1 - y0), 1.5);
+  const c = h('canvas', { class: 'pathcv', width: w, height: hh }), g = c.getContext('2d');
+  const X = v => 10 + (v - x0) * s, Y = v => 10 + (v - y0) * s;
+  if (!path.abs) { g.strokeStyle = '#444d5c'; g.strokeRect(X(-path.x), Y(-path.y), 320 * s, 192 * s); }
+  g.strokeStyle = '#e6a15a'; g.lineWidth = 1.5; g.beginPath(); x = y = 0; g.moveTo(X(0), Y(0));
+  for (const [dx, dy] of path.steps) { x += dx; y += dy; g.lineTo(X(x), Y(y)); } g.stroke();
+  g.fillStyle = '#55b39a'; g.beginPath(); g.arc(X(0), Y(0), 3.5, 0, 7); g.fill();
+  return c;
+}
+
+/* ---- text tab ---- */
+function renderText(p) {
+  const L = App.L, texts = L.texts();
+  p.append(h('div', { class: 'title', text: 'Messages' }), h('p', { class: 'sub', text: 'Shown in the status bar when a puzzle fires. Lower case letters, digits and simple punctuation only. About 28 characters fit; longer lines scroll.' }));
+  texts.forEach((t, i) => {
+    const used = puzzlesWhere(g => g('text') === i).length;
+    p.append(h('div', { class: 'txtrow' }, h('span', { class: 'n', text: i }),
+      h('input', { type: 'text', maxlength: 60, value: t, onchange: e => { const nt = L.texts(); nt[i] = e.target.value.toLowerCase().replace(/[^ -~]/g, ''); const snap = L.snapshot(); beginEdit(); if (!L.setTexts(nt)) { L.restore(snap); App.undo.pop(); toast('The messages no longer fit into the level file (1680 bytes).', true); } refreshAll(); } }),
+      h('span', { class: 'len', text: used ? used + '×' : '' })));
+  });
+  p.append(h('div', { class: 'title', style: 'margin-top:18px', text: 'Hints' }), h('p', { class: 'sub', text: 'A hint belongs to the tablet object whose x position equals its key. Up to 39 characters.' }));
+  for (let i = 0; i < NHINT; i++) {
+    const hn = L.hint(i);
+    p.append(h('div', { class: 'hintrow' }, h('span', { class: 'n', style: 'font:12px var(--num);color:var(--bronze)', text: i }),
+      h('input', { type: 'number', title: 'x of the tablet (65535 = unused)', style: 'width:62px', value: hn.x, min: 0, max: 65535, onchange: e => edit(() => L.setHint(i, clamp(+e.target.value || 0, 0, 65535), hn.text)) }),
+      h('input', { type: 'text', maxlength: 39, value: hn.text, style: 'font-family:var(--num)', onchange: e => edit(() => L.setHint(i, hn.x === 0xFFFF && e.target.value ? 0 : hn.x, e.target.value.toLowerCase().replace(/[^ -~]/g, ''))) })));
+  }
+}
+
+/* ---- checks tab ---- */
+function renderChecks(p) {
+  const issues = runChecks();
+  p.append(h('div', { class: 'title', text: 'Check' }), h('p', { class: 'sub', text: issues.length ? 'Things the game would handle badly, most serious first. Click one to go there.' : 'Nothing to report.' }));
+  for (const it of issues) p.append(h('button', { class: 'issue ' + it.sev, onclick: () => { if (it.sel) select(it.sel, true, 'check'); if (it.pos) centerOn(it.pos[0] * TW + 16, it.pos[1] * TH + 8); } }, h('i'), h('span', { text: it.msg })));
+}
+
+/* ============================================================================
+   Guide
+   ========================================================================== */
+function renderGuide(p) {
+  const L = App.L, I = L.info, g = h('div', { class: 'guide' });
+  const html = `
+<h3>How a level is wired</h3>
+<p>Every cell of the map has a picture (the tile layer) and a second value (the collision layer). In the collision layer
+<code>0</code> is empty, <code>1</code> a wall, <code>2</code> a ladder, and any value from <code>3</code> up is a
+<b>trigger cell</b>: value <i>v</i> belongs to trigger <i>v</i> &minus; 2.</p>
+<p>On every frame the game looks at the cells under the player&rsquo;s body (one or two columns, three rows). For each trigger
+cell it runs that trigger. A trigger is two numbers, a type and a target:</p>
+<table>
+<tr><th>Type</th><th>What happens</th><th>Target</th></tr>
+<tr><td>1</td><td>A flying wave is launched</td><td>wave</td></tr>
+<tr><td>2</td><td>A ground patrol appears</td><td>patrol</td></tr>
+<tr><td>3</td><td>A puzzle is checked</td><td>puzzle</td></tr>
+<tr><td>4</td><td>A walker gang appears</td><td>gang</td></tr>
+<tr><td>5</td><td>A flyer gang appears</td><td>gang</td></tr>
+<tr><td>6</td><td>Checkpoint</td><td>&ndash;</td></tr>
+<tr><td>7&ndash;10</td><td>A moving block runs command 1&ndash;4</td><td>block</td></tr>
+<tr><td>11</td><td>The guardian fight starts</td><td>&ndash;</td></tr>
+</table>
+<p>Each trigger works <b>once</b>. A puzzle trigger stays armed until its conditions are met; a block trigger stays armed
+while the block has no waypoints. Checkpoints can be touched again and again.</p>
+
+<h3>Puzzles</h3>
+<p>A puzzle has up to three conditions, one action, a position, a parameter and a message. While the player stands on a
+cell of its trigger, the conditions are tested every frame. When all of them hold, the message appears, the action runs,
+and the trigger is used up.</p>
+<p>Conditions can ask about carried items, weapons, switches, energy, lives, score, the puzzle timer, and whether another
+trigger has already fired. That last one is how the designers built sequences: &ldquo;trigger 39 has fired&rdquo; means the
+player has already been somewhere or solved something.</p>
+<p>The action <b>fire another trigger</b> chains events: one puzzle can release monsters, start a block, or check a
+second puzzle. Triggers that no cell carries are usually fired this way.</p>
+<p>With <b>use up the items</b> ticked, items named in &ldquo;player carries&rdquo; conditions are taken away. Keys used on
+doors and trapdoors are taken away regardless.</p>
+
+<p><b>Do not use &ldquo;score is under&rdquo;.</b> The DOS game has a bug in that one condition: checking it
+loses track of the puzzle, and the game then misbehaves or freezes. In a test it froze at once.</p>
+
+<h3>How the player uses things</h3>
+<ul>
+<li>Power-ups, treasure and weapons are taken by walking over them. Loose treasure falls to the floor.</li>
+<li>Inventory items (keys and the like) are picked up by crouching and pressing fire.</li>
+<li>A lever is pulled by pushing up to face the wall, then pressing fire. The puzzle behind it is only checked while the
+player stands on its trigger cells, so put those cells under the lever.</li>
+<li>Passage and exit doors are entered by pushing up while standing in the doorway.</li>
+</ul>
+
+<h3>Switches and levers</h3>
+<p>A switch is an object. Its two positions are two neighbouring item types (even = off, odd = on). The game keeps a
+table of up to 64 switches, matched to the objects by position, and puzzles refer to a switch by its number in that
+table. The editor updates the table whenever you add, move or delete a switch object.</p>
+
+<h3>Doors, trapdoors, blocks</h3>
+<ul>
+<li><b>Tile doors</b> are 2 &times; 3 cells. Put tile ${I.doorOpen} or ${I.doorClosed} in the top-left cell; the game turns it
+into a closed, solid door when the level starts. &ldquo;Open door&rdquo; and &ldquo;close door&rdquo; act on the door at the puzzle position.</li>
+<li><b>Passage doors</b> appear as a doorway sprite. Pushing up inside one carries the player to the destination cell,
+which can be anywhere on the map.</li>
+<li><b>Trapdoors</b> are single cells listed in the trapdoor table. Open and close actions must use exactly the same
+position as the table entry.</li>
+<li><b>Moving blocks</b> have up to four waypoints and four commands. Trigger types 7 to 10 run commands 1 to 4.</li>
+</ul>
+
+<h3>Checkpoints and the end of a world</h3>
+<p>Cells with value 255 (trigger 253) are checkpoints: the restart point after a death. Each new checkpoint also counts
+one step of progress. When the count reaches a number fixed inside GAME.EXE, the &ldquo;world completed&rdquo; screen appears.
+For level ${L.num} those numbers are: ${I.sections.map(s => `<b>${s[0]}</b> (${s[1]})`).join(', ')}.</p>
+<p>The level itself ends through a puzzle with the action <b>open level exit</b>. Map A is played first; map B replaces
+it part-way through, and the player keeps the same coordinates.</p>
+
+<h3>Objects linked by position</h3>
+<ul>
+<li>A <b>teleport stone</b> looks up its destination by its own x position.</li>
+<li>A <b>tablet</b> shows the hint whose key equals its x position.</li>
+<li>Monsters can be told to leave a reward where the last one dies.</li>
+</ul>
+
+<h3>Limits</h3>
+<table>
+<tr><td>Objects</td><td>200</td><td>Triggers</td><td>253</td></tr>
+<tr><td>Puzzles</td><td>100</td><td>Messages</td><td>40</td></tr>
+<tr><td>Flying waves</td><td>100</td><td>Ground patrols</td><td>100</td></tr>
+<tr><td>Walker gangs</td><td>50</td><td>Flyer gangs</td><td>50</td></tr>
+<tr><td>Switches</td><td>64</td><td>Trapdoors</td><td>20</td></tr>
+<tr><td>Moving blocks</td><td>25</td><td>Teleports</td><td>30</td></tr>
+</table>
+<p>This map draws ${L.tileCount} tiles; higher tile numbers are black in the game.</p>
+
+<h3>Keys</h3>
+<p><kbd>1</kbd>&ndash;<kbd>5</kbd> tools &nbsp; <kbd>G</kbd> grid &nbsp; <kbd>+</kbd> <kbd>-</kbd> zoom &nbsp; <kbd>Space</kbd> + drag pan<br>
+<kbd>Ctrl</kbd>+<kbd>Z</kbd> undo &nbsp; <kbd>Ctrl</kbd>+<kbd>Y</kbd> redo &nbsp; <kbd>Ctrl</kbd>+<kbd>S</kbd> save &nbsp; <kbd>Del</kbd> delete object &nbsp; arrows nudge</p>
+<p class="credit">Gods Level Editor &mdash; created by <b>DarkSoL</b>. Discord: <b>darksol41</b></p>`;
+  g.innerHTML = html; p.append(g);
+}
+
+</script>
+</body>
+</html>
